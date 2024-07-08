@@ -1,6 +1,9 @@
 <?php
 
 use App\IndexHandler;
+use App\PeclHandler;
+use App\PhpHandler;
+use App\WinlibsHandler;
 use App\Router;
 
 $router = new Router();

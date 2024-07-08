@@ -4,13 +4,23 @@ namespace App;
 
 class Validator
 {
-    protected array $errors = [];
+    function __construct
+    (
+        protected array $rules,
+        protected array $errors = [],
+        protected bool $valid = false
+    )
+    {
+        //
+    }
 
-    public function validate(array $data, array $rules): bool
+
+
+    public function validate(array $data): void
     {
         $this->errors = [];
 
-        foreach ($rules as $field => $ruleString) {
+        foreach ($this->rules as $field => $ruleString) {
             $rulesArray = explode('|', $ruleString);
             foreach ($rulesArray as $rule) {
                 $ruleParts = explode(':', $rule);
@@ -23,12 +33,28 @@ class Validator
             }
         }
 
-        return empty($this->errors);
+        $this->valid = empty($this->errors);
+    }
+
+    public function isValid(): bool
+    {
+        return $this->valid;
     }
 
     public function errors(): array
     {
         return $this->errors;
+    }
+
+    public function __toString(): string
+    {
+        $string = PHP_EOL;
+        foreach ($this->errors as $field => $errors) {
+            foreach ($errors as $error) {
+                $string .= "$field: $error" . PHP_EOL;
+            }
+        }
+        return $string;
     }
 
     protected function required($value): bool

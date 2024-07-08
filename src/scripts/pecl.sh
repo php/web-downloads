@@ -18,9 +18,11 @@ for tool in curl unzip; do
 done
 
 zip_file="/tmp/$extension-$ref.zip"
+dest_dir="${BUILDS_DIRECTORY:?}/pecl/releases"
 fetch_artifact "$zip_file" "$url" "$token"
 if [[ -e "$zip_file" && "$(file --mime-type -b "$zip_file")" = "application/zip" ]]; then
-  if ! unzip "$zip_file" -d "${BUILDS_DIRECTORY:?}"/pecl/releases/; then
+  mkdir -p "$dest_dir"
+  if ! unzip -o "$zip_file" -d "$dest_dir"; then
     echo "Failed to unzip the build"
     exit 1
   fi
