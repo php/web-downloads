@@ -5,19 +5,9 @@ namespace App;
 use Exception;
 use ZipArchive;
 
-class PeclHandler
+class PeclHandler extends BaseHandler
 {
-
-    public function handle(): void
-    {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if($this->validate($data)) {
-            $this->execute($data);
-        }
-    }
-
-    private function validate(mixed $data): bool
+    protected function validate(mixed $data): bool
     {
         $validator = new Validator([
             'url' => 'required|url',
@@ -37,7 +27,7 @@ class PeclHandler
         return $valid;
     }
 
-    private function execute(array $data): void
+    protected function execute(array $data): void
     {
         try {
             extract($data);
@@ -53,7 +43,8 @@ class PeclHandler
      */
     private function fetchExtension(string $extension, string $ref, string $url, string $token): void
     {
-        $filepath = "/tmp/$extension-$ref.zip";
+        $filepath = "/tmp/$extension-$ref-" . strtotime('now') . ".zip";
+
         FetchArtifact::handle($url, $filepath, $token);
 
         if(!file_exists($filepath)) {

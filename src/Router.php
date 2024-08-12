@@ -42,6 +42,7 @@ class Router
                 return;
             }
 
+            /** @var BaseHandler $handler */
             $handler = $route['handler'];
             (new $handler)->handle();
         } elseif (!empty($allowedMethods)) {

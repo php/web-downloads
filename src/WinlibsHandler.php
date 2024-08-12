@@ -2,10 +2,20 @@
 
 namespace App;
 
-class WinlibsHandler
+class WinlibsHandler extends BaseHandler
 {
 
-    public function handle()
+    public function handle(): void
     {
+    }
+
+    protected function validate(array $data): bool
+    {
+        return true;
+    }
+
+    protected function execute(array $data): void
+    {
+        //
     }
 }
