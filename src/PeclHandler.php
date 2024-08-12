@@ -47,7 +47,7 @@ class PeclHandler extends BaseHandler
 
         FetchArtifact::handle($url, $filepath, $token);
 
-        if(!file_exists($filepath)) {
+        if(!file_exists($filepath) || !mime_content_type($filepath) === 'application/zip') {
             throw new Exception('Failed to fetch the extension');
         }
 
