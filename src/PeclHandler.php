@@ -43,11 +43,11 @@ class PeclHandler extends BaseHandler
      */
     private function fetchExtension(string $extension, string $ref, string $url, string $token): void
     {
-        $filepath = "/tmp/$extension-$ref-" . strtotime('now') . ".zip";
+        $filepath = "/tmp/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
 
         FetchArtifact::handle($url, $filepath, $token);
 
-        if(!file_exists($filepath) || !mime_content_type($filepath) === 'application/zip') {
+        if(!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the extension');
         }
 
