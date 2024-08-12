@@ -2,13 +2,11 @@
 
 namespace App;
 
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
+use Exception;
+use ZipArchive;
 
 class PeclHandler
 {
-
-    protected string $script = 'pecl.sh';
 
     public function handle(): void
     {
@@ -41,18 +39,42 @@ class PeclHandler
 
     private function execute(array $data): void
     {
-        extract($data);
-        $SCRIPTS_USER = $_ENV['SCRIPTS_USER'];
-        $this->script = __DIR__ . "/scripts/$this->script";
-        $process = new Process(['sudo', '-u', $SCRIPTS_USER, 'bash', $this->script, $extension, $ref, $url, $token ?? '']);
-
         try {
-            $process->mustRun(function ($type, $buffer): void {
-                echo $buffer;
-            });
-        } catch (ProcessFailedException $exception) {
+            extract($data);
+            $this->fetchExtension($extension, $ref, $url, $token ?? '');
+        } catch (Exception $exception) {
             http_response_code(500);
-            echo 'Failed to add extension: ' . $exception->getMessage();
+            echo 'Error: ' . $exception->getMessage();
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function fetchExtension(string $extension, string $ref, string $url, string $token): void
+    {
+        $filepath = "/tmp/$extension-$ref.zip";
+        FetchArtifact::handle($url, $filepath, $token);
+
+        if(!file_exists($filepath)) {
+            throw new Exception('Failed to fetch the extension');
+        }
+
+        $destinationDirectory = $_ENV['BUILDS_DIRECTORY'] . "/pecl/releases";
+
+        if(!is_dir($destinationDirectory)) {
+            mkdir($destinationDirectory, 0755, true);
+        }
+
+        $zip = new ZipArchive();
+
+        if ($zip->open($filepath) === TRUE) {
+            $zip->extractTo($destinationDirectory);
+            $zip->close();
+        } else {
+            throw new Exception('Failed to extract the extension');
+        }
+
+        unlink($filepath);
     }
 }
