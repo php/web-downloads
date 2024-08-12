@@ -60,7 +60,9 @@ class PeclHandler extends BaseHandler
         $zip = new ZipArchive();
 
         if ($zip->open($filepath) === TRUE) {
-            $zip->extractTo($destinationDirectory);
+            if($zip->extractTo($destinationDirectory) === FALSE) {
+                throw new Exception('Failed to extract the extension build');
+            }
             $zip->close();
         } else {
             throw new Exception('Failed to extract the extension');
