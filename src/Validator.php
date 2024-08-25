@@ -28,7 +28,7 @@ class Validator
                 $ruleValue = $ruleParts[1] ?? null;
 
                 if (!$this->$ruleName($data[$field] ?? null, $ruleValue)) {
-                    $this->errors[$field][] = $this->getErrorMessage($field, $ruleName);
+                    $this->errors[$field][] = $this->getErrorMessage($field, $ruleName, $ruleValue);
                 }
             }
         }
@@ -72,12 +72,18 @@ class Validator
         return is_string($value);
     }
 
-    protected function getErrorMessage($field, $rule): string
+    protected function regex($value, $pattern): bool
+    {
+        return preg_match($pattern, $value) === 1;
+    }
+
+    protected function getErrorMessage($field, $rule, $value): string
     {
         $messages = [
             'required' => "The $field field is required.",
             'url' => "The $field field must be a valid URL.",
             'string' => "The $field field must be a string.",
+            'regex' => "The $field field must match the pattern $value.",
         ];
 
         return $messages[$rule] ?? "The $field field has an invalid value.";
