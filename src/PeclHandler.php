@@ -51,7 +51,7 @@ class PeclHandler extends BaseHandler
             throw new Exception('Failed to fetch the extension');
         }
 
-        $destinationDirectory = $_ENV['BUILDS_DIRECTORY'] . "/pecl/releases";
+        $destinationDirectory = getenv('BUILDS_DIRECTORY') . "/pecl/releases";
 
         if(!is_dir($destinationDirectory)) {
             mkdir($destinationDirectory, 0755, true);

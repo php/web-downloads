@@ -4,14 +4,6 @@ This project is a collection of scripts to handle downloading builds to the down
 
 ## Set up
 
-- Copy `env.example` to `.env` and set the `AUTH_TOKEN` and `BUILDS_DIRECTORY` values.
-
-- Install dependencies.
-
-```bash
-composer install
-```
-
 - Set up a virtual host in Apache to point to the `public` directory as the `DocumentRoot`.
 
 - Set up the `ErrorDocument` for 404 to point to `public/redirect.php` in the virtual host configuration.

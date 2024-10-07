@@ -61,7 +61,7 @@ class WinlibsHandler extends BaseHandler
 
     private function copyFiles(array $files, $library, $ref, $vs_version_targets): void
     {
-        $baseDirectory = $_ENV['BUILDS_DIRECTORY'] . "/php-sdk/deps";
+        $baseDirectory = getenv('BUILDS_DIRECTORY') . "/php-sdk/deps";
         if(!is_dir($baseDirectory)) {
             mkdir($baseDirectory, 0755, true);
         }
@@ -81,7 +81,7 @@ class WinlibsHandler extends BaseHandler
         $vs_version_targets = explode(',', $vs_version_targets);
         $stability_values = explode(',', $stability);
 
-        $baseDirectory = $_ENV['BUILDS_DIRECTORY'] . "/php-sdk/deps/series";
+        $baseDirectory = getenv('BUILDS_DIRECTORY') . "/php-sdk/deps/series";
 
         foreach ($php_versions as $php_version) {
             foreach ($vs_version_targets as $vs_version_target) {

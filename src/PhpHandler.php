@@ -85,7 +85,7 @@ class PhpHandler extends BaseHandler
         $testPackFile = basename(glob($tempDirectory . '/php-test-pack-*.zip')[0]);
         $testPackFileName = str_replace('.zip', '', $testPackFile);
         $version = explode('-', $testPackFileName)[3];
-        return $_ENV['BUILDS_DIRECTORY'] . (preg_match('/^\d+\.\d+\.\d+$/', $version) ? '/releases' : '/qa');
+        return getenv('BUILDS_DIRECTORY') . (preg_match('/^\d+\.\d+\.\d+$/', $version) ? '/releases' : '/qa');
     }
 
     /**
@@ -177,7 +177,7 @@ class PhpHandler extends BaseHandler
         }
 
         $this->updateReleasesJson($releases, $directory);
-        if($directory === $_ENV['BUILDS_DIRECTORY'] . '/releases') {
+        if($directory === getenv('BUILDS_DIRECTORY') . '/releases') {
             $this->updateLatestBuilds($releases, $directory);
         }
     }
