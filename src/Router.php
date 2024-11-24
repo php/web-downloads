@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Http\BaseController;
+
 class Router
 {
     private array $routes = [];
@@ -42,7 +44,7 @@ class Router
                 return;
             }
 
-            /** @var BaseHandler $handler */
+            /** @var BaseController $handler */
             $handler = $route['handler'];
             (new $handler)->handle();
         } elseif (!empty($allowedMethods)) {

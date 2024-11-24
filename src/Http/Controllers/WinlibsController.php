@@ -1,8 +1,12 @@
 <?php
 
-namespace App;
+namespace App\Http\Controllers;
 
-class WinlibsHandler extends BaseHandler
+use App\Actions\GetArtifacts;
+use App\Http\BaseController;
+use App\Validator;
+
+class WinlibsController extends BaseController
 {
     protected function validate(array $data): bool
     {

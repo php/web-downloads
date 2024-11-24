@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Http;
 
-abstract class BaseHandler implements HandlerInterface
+abstract class BaseController implements ControllerInterface
 {
     public function handle(): void {
         $data = json_decode(file_get_contents('php://input'), true);

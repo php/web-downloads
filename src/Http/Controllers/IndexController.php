@@ -1,7 +1,9 @@
 <?php
 
-namespace App;
-class IndexHandler extends BaseHandler
+namespace App\Http\Controllers;
+use App\Http\BaseController;
+
+class IndexController extends BaseController
 {
     public function handle(): void
     {

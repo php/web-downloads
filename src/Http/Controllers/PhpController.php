@@ -1,18 +1,19 @@
 <?php
 
-namespace App;
+namespace App\Http\Controllers;
 
+use App\Actions\FetchArtifact;
+use App\Http\BaseController;
+use App\Validator;
 use Exception;
-use ZipArchive;
 
-class PeclHandler extends BaseHandler
+class PhpController extends BaseController
 {
-    protected function validate(mixed $data): bool
+    protected function validate(array $data): bool
     {
         $validator = new Validator([
             'url' => 'required|url',
-            'extension' => 'required|string',
-            'ref' => 'required|string',
+            'token' => 'required|string',
         ]);
 
         $validator->validate($data);
@@ -31,7 +32,7 @@ class PeclHandler extends BaseHandler
     {
         try {
             extract($data);
-            $this->fetchExtension($extension, $ref, $url, $token ?? '');
+            $this->fetchPhpBuild($url, $token);
         } catch (Exception $exception) {
             http_response_code(500);
             echo 'Error: ' . $exception->getMessage();
@@ -41,14 +42,16 @@ class PeclHandler extends BaseHandler
     /**
      * @throws Exception
      */
-    private function fetchExtension(string $extension, string $ref, string $url, string $token): void
+    private function fetchPhpBuild(string $url, string $token): void
     {
-        $filepath = getenv('BUILDS_DIRECTORY') . "/pecl/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
+        $hash = hash('sha256', $url) . strtotime('now');
+
+        $filepath = getenv('BUILDS_DIRECTORY') . "/php/php-" . $hash . ".tar.gz";
 
         FetchArtifact::handle($url, $filepath, $token);
 
         if(!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
-            throw new Exception('Failed to fetch the extension');
+            throw new Exception('Failed to fetch the PHP build');
         }
     }
 }
