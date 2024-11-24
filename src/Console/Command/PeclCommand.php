@@ -12,10 +12,11 @@ class PeclCommand extends Command
 
     protected string $description = 'Add pecl extensions';
 
-    public function handle(): int {
+    public function handle(): int
+    {
         try {
             $baseDirectory = $this->getOption('base-directory');
-            if(!$baseDirectory) {
+            if (!$baseDirectory) {
                 throw new Exception('Base directory is required');
             }
 
@@ -26,7 +27,7 @@ class PeclCommand extends Command
             $filteredFiles = [];
             foreach ($files as $filepath) {
                 $lockFile = $filepath . '.lock';
-                if(!file_exists($lockFile)) {
+                if (!file_exists($lockFile)) {
                     touch($lockFile);
                     $filteredFiles[] = $filepath;
                 }

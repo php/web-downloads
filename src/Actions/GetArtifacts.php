@@ -11,7 +11,7 @@ class GetArtifacts
         $base_url = "https://api.github.com/repos/";
 
         $repo = "winlibs/winlib-builder";
-        
+
         curl_setopt_array($ch, [
             CURLOPT_URL => "$base_url/$repo/actions/runs/$workflow_run_id/artifacts",
             CURLOPT_RETURNTRANSFER => true,
@@ -22,11 +22,11 @@ class GetArtifacts
                 "User-Agent: PHP Web Downloads",
             ],
         ]);
-        
+
         $response = curl_exec($ch);
         $err = curl_error($ch);
         curl_close($ch);
-        
+
         if ($err) {
             echo "cURL Error #:" . $err;
         } else {

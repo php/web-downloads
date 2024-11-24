@@ -12,10 +12,11 @@ class WinlibsCommand extends Command
 
     protected ?string $baseDirectory = null;
 
-    public function handle(): int {
+    public function handle(): int
+    {
         try {
             $this->baseDirectory = $this->getOption('base-directory');
-            if(!$this->baseDirectory) {
+            if (!$this->baseDirectory) {
                 throw new Exception('Base directory is required');
             }
 
@@ -26,18 +27,18 @@ class WinlibsCommand extends Command
             $filteredDirectories = [];
             foreach ($buildDirectories as $directoryPath) {
                 $lockFile = $directoryPath . '.lock';
-                if(!file_exists($lockFile)) {
+                if (!file_exists($lockFile)) {
                     touch($lockFile);
                     $filteredDirectories[] = $directoryPath;
                 }
             }
 
-            foreach($filteredDirectories as $directoryPath) {
+            foreach ($filteredDirectories as $directoryPath) {
                 $data = json_decode(file_get_contents($directoryPath . '/data.json'), true);
                 extract($data);
                 $files = glob($directoryPath . '/*.zip');
                 $files = $this->parseFiles($files);
-                if($files) {
+                if ($files) {
                     $this->copyFiles($files, $library, $ref, $vs_version_targets);
                     $this->updateSeriesFiles($files, $library, $ref, $php_versions, $vs_version_targets, $stability);
                 }
@@ -72,14 +73,14 @@ class WinlibsCommand extends Command
         return $data;
     }
 
-    private function copyFiles(array $files, $library, $ref, $vs_version_targets): void
+    private function copyFiles(array $files, string $library, string $ref, string $vs_version_targets): void
     {
         $baseDirectory = $this->baseDirectory . "/php-sdk/deps";
-        if(!is_dir($baseDirectory)) {
+        if (!is_dir($baseDirectory)) {
             mkdir($baseDirectory, 0755, true);
         }
         $vs_version_targets = explode(',', $vs_version_targets);
-        foreach($files as $file) {
+        foreach ($files as $file) {
             foreach ($vs_version_targets as $vs_version_target) {
                 $destinationDirectory = $baseDirectory . '/' . $vs_version_target . '/' . $file['arch'];
                 $destinationFileName = str_replace($file['artifact_name'], $library . '-' . $ref, $file['file_name']);
@@ -88,7 +89,14 @@ class WinlibsCommand extends Command
         }
     }
 
-    private function updateSeriesFiles($files, $library, $ref, $php_versions, $vs_version_targets, $stability): void
+    private function updateSeriesFiles(
+        array  $files,
+        string $library,
+        string $ref,
+        string $php_versions,
+        string $vs_version_targets,
+        string $stability
+    ): void
     {
         $php_versions = explode(',', $php_versions);
         $vs_version_targets = explode(',', $vs_version_targets);
@@ -104,8 +112,8 @@ class WinlibsCommand extends Command
                         $arch = $file['arch'];
                         $seriesFile = $baseDirectory . "/packages-$php_version-$vs_version_target-$arch-$stability_value.txt";
                         $file_lines = file($seriesFile, FILE_IGNORE_NEW_LINES);
-                        foreach($file_lines as $no => $line) {
-                            if(str_starts_with($line, $library)) {
+                        foreach ($file_lines as $no => $line) {
+                            if (str_starts_with($line, $library)) {
                                 $file_lines[$no] = $fileName;
                             }
                         }

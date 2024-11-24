@@ -20,7 +20,7 @@ class PhpController extends BaseController
 
         $valid = $validator->isValid();
 
-        if(!$valid) {
+        if (!$valid) {
             http_response_code(400);
             echo 'Invalid request: ' . $validator;
         }
@@ -50,7 +50,7 @@ class PhpController extends BaseController
 
         FetchArtifact::handle($url, $filepath, $token);
 
-        if(!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
+        if (!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the PHP build');
         }
     }

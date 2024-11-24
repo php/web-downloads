@@ -25,7 +25,7 @@ class WinlibsController extends BaseController
 
         $valid = $validator->isValid();
 
-        if(!$valid) {
+        if (!$valid) {
             http_response_code(400);
             echo 'Invalid request: ' . $validator;
         }
@@ -37,7 +37,7 @@ class WinlibsController extends BaseController
     {
         extract($data);
         GetArtifacts::handle($workflow_run_id, $token);
-        $directory = getenv('BUILDS_DIRECTORY') . '/winlibs/'. $workflow_run_id;
-        file_put_contents( $directory . '/data.json', json_encode($data));
+        $directory = getenv('BUILDS_DIRECTORY') . '/winlibs/' . $workflow_run_id;
+        file_put_contents($directory . '/data.json', json_encode($data));
     }
 }

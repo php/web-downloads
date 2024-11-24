@@ -8,12 +8,11 @@ class Validator
     (
         protected array $rules,
         protected array $errors = [],
-        protected bool $valid = false
+        protected bool  $valid = false
     )
     {
         //
     }
-
 
 
     public function validate(array $data): void

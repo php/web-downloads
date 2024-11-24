@@ -14,10 +14,11 @@ class PhpCommand extends Command
 
     protected ?string $baseDirectory = null;
 
-    public function handle(): int {
+    public function handle(): int
+    {
         try {
             $this->baseDirectory = $this->getOption('base-directory');
-            if(!$this->baseDirectory) {
+            if (!$this->baseDirectory) {
                 throw new Exception('Base directory is required');
             }
 
@@ -28,7 +29,7 @@ class PhpCommand extends Command
             $filteredFiles = [];
             foreach ($files as $filepath) {
                 $lockFile = $filepath . '.lock';
-                if(!file_exists($lockFile)) {
+                if (!file_exists($lockFile)) {
                     touch($lockFile);
                     $filteredFiles[] = $filepath;
                 }
@@ -38,7 +39,7 @@ class PhpCommand extends Command
                 $hash = hash('sha256', $filepath) . strtotime('now');
                 $tempDirectory = "/tmp/php-" . $hash;
 
-                if(is_dir($tempDirectory)) {
+                if (is_dir($tempDirectory)) {
                     rmdir($tempDirectory);
                 }
                 mkdir($tempDirectory, 0755, true);
@@ -46,7 +47,7 @@ class PhpCommand extends Command
                 $zip = new ZipArchive();
 
                 if ($zip->open($filepath) === TRUE) {
-                    if($zip->extractTo($tempDirectory) === FALSE) {
+                    if ($zip->extractTo($tempDirectory) === FALSE) {
                         throw new Exception('Failed to extract the extension build');
                     }
                     $zip->close();
@@ -87,7 +88,7 @@ class PhpCommand extends Command
     private function moveBuild(string $tempDirectory, string $destinationDirectory): void
     {
         $files = glob($tempDirectory . '/*');
-        if($files) {
+        if ($files) {
             $version = $this->getFileVersion($files[0]);
             foreach ($files as $file) {
                 $fileName = basename($file);
@@ -107,9 +108,9 @@ class PhpCommand extends Command
         $files = glob($directory . '/php*-' . $version_short . '-*.zip');
         foreach ($files as $file) {
             $fileVersion = $this->getFileVersion($file);
-            if($fileVersion) {
+            if ($fileVersion) {
                 copy($directory . '/' . basename($file), $directory . '/archive/' . $file);
-                if(version_compare($fileVersion, $version) < 0) {
+                if (version_compare($fileVersion, $version) < 0) {
                     unlink($file);
                 }
             }
@@ -158,7 +159,7 @@ class PhpCommand extends Command
                 'installer' => 'php-' . $namingPattern . '.msi',
                 'test_pack' => 'php-test-pack-' . $parts['version'] . '.zip',
             ];
-            foreach($build_types as $type => $fileName) {
+            foreach ($build_types as $type => $fileName) {
                 $filePath = $directory . '/' . $fileName;
                 if (file_exists($filePath)) {
                     $releases[$version_short][$type] = [
@@ -170,7 +171,7 @@ class PhpCommand extends Command
         }
 
         $this->updateReleasesJson($releases, $directory);
-        if($directory === $this->baseDirectory . '/releases') {
+        if ($directory === $this->baseDirectory . '/releases') {
             $this->updateLatestBuilds($releases, $directory);
         }
     }
@@ -182,7 +183,7 @@ class PhpCommand extends Command
     {
         foreach ($releases as &$release) {
             foreach ($release as &$build_type) {
-                if (! is_array($build_type) || ! isset($build_type['mtime'])) {
+                if (!is_array($build_type) || !isset($build_type['mtime'])) {
                     continue;
                 }
 
@@ -234,7 +235,7 @@ class PhpCommand extends Command
 
         $total = count($sizes);
 
-        while($total-- && $size > 1024) $size /= 1024;
+        while ($total-- && $size > 1024) $size /= 1024;
 
         return round($size, 2) . $sizes[$total];
     }
@@ -273,12 +274,12 @@ class PhpCommand extends Command
         $ts = is_numeric($parts[$t]) ? $parts[$t] : false;
 
         return [
-            'version'  => $version,
-            'version_short'  => substr($version, 0, 3),
-            'nts'      => $nts,
-            'vc'       => $vc,
-            'arch'     => $arch,
-            'ts'       => $ts
+            'version' => $version,
+            'version_short' => substr($version, 0, 3),
+            'nts' => $nts,
+            'vc' => $vc,
+            'arch' => $arch,
+            'ts' => $ts
         ];
     }
 }
