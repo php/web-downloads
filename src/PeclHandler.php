@@ -43,31 +43,12 @@ class PeclHandler extends BaseHandler
      */
     private function fetchExtension(string $extension, string $ref, string $url, string $token): void
     {
-        $filepath = "/tmp/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
+        $filepath = getenv('BUILDS_DIRECTORY') . "/pecl/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
 
         FetchArtifact::handle($url, $filepath, $token);
 
         if(!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the extension');
         }
-
-        $destinationDirectory = getenv('BUILDS_DIRECTORY') . "/pecl/releases";
-
-        if(!is_dir($destinationDirectory)) {
-            mkdir($destinationDirectory, 0755, true);
-        }
-
-        $zip = new ZipArchive();
-
-        if ($zip->open($filepath) === TRUE) {
-            if($zip->extractTo($destinationDirectory) === FALSE) {
-                throw new Exception('Failed to extract the extension build');
-            }
-            $zip->close();
-        } else {
-            throw new Exception('Failed to extract the extension');
-        }
-
-        unlink($filepath);
     }
 }

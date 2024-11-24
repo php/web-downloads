@@ -4,7 +4,7 @@ namespace App;
 
 class GetArtifacts
 {
-    public static function handle($workflow_run_id, $token): null|array
+    public static function handle($workflow_run_id, $token): void
     {
         $ch = curl_init();
 
@@ -29,16 +29,17 @@ class GetArtifacts
         
         if ($err) {
             echo "cURL Error #:" . $err;
-            return null;
         } else {
-            $files = [];
             $artifacts = json_decode($response, true);
+            $workflowRunDirectory = getenv('BUILDS_DIRECTORY') . "/winlibs/" . $workflow_run_id;
+            if (is_dir($workflowRunDirectory)) {
+                rmdir($workflowRunDirectory);
+            }
+            mkdir($workflowRunDirectory, 0755, true);
             foreach ($artifacts['artifacts'] as $artifact) {
-                $filepath = "/tmp/" . $artifact['name'] . ".zip";
-                $files[] = $filepath;
+                $filepath = $workflowRunDirectory . "/" . $artifact['name'] . ".zip";
                 FetchArtifact::handle($artifact['archive_download_url'], $filepath, $token);
             }
-            return $files;
         }
     }
 
