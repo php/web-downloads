@@ -1,8 +1,16 @@
 # Web Downloads
 
-This project is a collection of scripts to handle downloading builds to the downloads.php.net server
+This project handles downloading builds to the downloads.php.net server.
 
-## Set up
+It supports the following type of builds:
+
+- PHP
+- PECL extensions
+- Winlibs libraries
+
+It also has commands to process the downloaded files and update the relevant configuration files.
+
+## Apache configuration
 
 - Set up a virtual host in Apache to point to the `public` directory as the `DocumentRoot`.
 
@@ -22,6 +30,11 @@ This project is a collection of scripts to handle downloading builds to the down
     </IfModule>
 </Directory>
 ```
+
+## Code requirements
+
+Code must function on a vanilla PHP 8.2 installation.
+Please keep this in mind before filing a pull request.
 
 ## License
 
