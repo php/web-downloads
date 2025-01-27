@@ -1,0 +1,19 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Artifact URL'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          curl \
+          --requests POST \
+          --location https://downloads.php.net/php \
+          --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
+          --data '{ "url": "${{ inputs.url }}", "token": "${{ secrets.TOKEN }}" }'

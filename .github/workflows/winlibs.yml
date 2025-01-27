@@ -1,0 +1,37 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      library:
+        description: 'Library Name'
+        required: true
+      ref:
+        description: 'Library Ref'
+        required: true
+      workflow_run_id:
+        description: 'Workflow Run ID'
+        required: true
+      php_versions:
+        description: 'PHP Versions'
+        required: true
+      vs_version:
+        description: 'VS Versions'
+        required: true
+      vs_version_targets:
+        description: 'VS Version Targets'
+        required: true
+      stability:
+        description: 'Stability'
+        required: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          curl \
+          --requests POST \
+          --location https://downloads.php.net/winlibs \
+          --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
+          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version": "${{ inputs.vs_version }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}" }'
