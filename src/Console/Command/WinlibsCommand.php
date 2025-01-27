@@ -3,6 +3,7 @@
 namespace App\Console\Command;
 
 use App\Console\Command;
+use App\Helpers\Helpers;
 use Exception;
 
 class WinlibsCommand extends Command
@@ -34,16 +35,16 @@ class WinlibsCommand extends Command
             }
 
             foreach ($filteredDirectories as $directoryPath) {
-                $data = json_decode(file_get_contents($directoryPath . '/data.json'), true);
+                $data = json_decode(file_get_contents($directoryPath . '/data.json'), true, 512, JSON_THROW_ON_ERROR);
                 extract($data);
                 $files = glob($directoryPath . '/*.zip');
                 $files = $this->parseFiles($files);
                 if ($files) {
-                    $this->copyFiles($files, $library, $ref, $vs_version_targets);
-                    $this->updateSeriesFiles($files, $library, $ref, $php_versions, $vs_version_targets, $stability);
+                    $this->copyFiles($files, $library, $vs_version_targets);
+                    $this->updateSeriesFiles($files, $library, $php_versions, $vs_version_targets, $stability);
                 }
 
-                rmdir($directoryPath);
+                (new Helpers)->rmdirr($directoryPath);
 
                 unlink($directoryPath . '.lock');
             }
@@ -60,20 +61,21 @@ class WinlibsCommand extends Command
         foreach ($files as $file) {
             $fileName = basename($file);
             $fileNameParts = explode('.', $fileName);
-            $parsedFileNameParts = explode('-', $fileNameParts[0]);
+            $parsedFileNameParts = explode('-', $fileName);
+            $archParts = explode('.', $parsedFileNameParts[3]);
             $data[] = [
                 'file_path' => $file,
                 'file_name' => $fileName,
-                'extension' => $fileNameParts[1],
+                'extension' => $fileNameParts[count($fileNameParts)-1],
                 'artifact_name' => $parsedFileNameParts[0],
-                'vs_version' => $parsedFileNameParts[1],
-                'arch' => $parsedFileNameParts[2],
+                'vs_version' => $parsedFileNameParts[2],
+                'arch' => $archParts[0],
             ];
         }
         return $data;
     }
 
-    private function copyFiles(array $files, string $library, string $ref, string $vs_version_targets): void
+    private function copyFiles(array $files, string $library, string $vs_version_targets): void
     {
         $baseDirectory = $this->baseDirectory . "/php-sdk/deps";
         if (!is_dir($baseDirectory)) {
@@ -83,7 +85,10 @@ class WinlibsCommand extends Command
         foreach ($files as $file) {
             foreach ($vs_version_targets as $vs_version_target) {
                 $destinationDirectory = $baseDirectory . '/' . $vs_version_target . '/' . $file['arch'];
-                $destinationFileName = str_replace($file['artifact_name'], $library . '-' . $ref, $file['file_name']);
+                if (!is_dir($destinationDirectory)) {
+                    mkdir($destinationDirectory, 0755, true);
+                }
+                $destinationFileName = str_replace($file['artifact_name'], $library, $file['file_name']);
                 copy($file['file_path'], $destinationDirectory . '/' . $destinationFileName);
             }
         }
@@ -92,7 +97,6 @@ class WinlibsCommand extends Command
     private function updateSeriesFiles(
         array  $files,
         string $library,
-        string $ref,
         string $php_versions,
         string $vs_version_targets,
         string $stability
@@ -104,17 +108,30 @@ class WinlibsCommand extends Command
 
         $baseDirectory = $this->baseDirectory . "/php-sdk/deps/series";
 
+        if (!is_dir($baseDirectory)) {
+            mkdir($baseDirectory, 0755, true);
+        }
+
         foreach ($php_versions as $php_version) {
             foreach ($vs_version_targets as $vs_version_target) {
                 foreach ($stability_values as $stability_value) {
                     foreach ($files as $file) {
-                        $fileName = str_replace($file['artifact_name'], $library . '-' . $ref, $file['file_name']);
+                        $fileName = str_replace($file['artifact_name'], $library, $file['file_name']);
                         $arch = $file['arch'];
                         $seriesFile = $baseDirectory . "/packages-$php_version-$vs_version_target-$arch-$stability_value.txt";
-                        $file_lines = file($seriesFile, FILE_IGNORE_NEW_LINES);
-                        foreach ($file_lines as $no => $line) {
-                            if (str_starts_with($line, $library)) {
-                                $file_lines[$no] = $fileName;
+                        if (!file_exists($seriesFile)) {
+                            $file_lines = [$fileName];
+                        } else {
+                            $file_lines = file($seriesFile, FILE_IGNORE_NEW_LINES);
+                            $found = false;
+                            foreach ($file_lines as $no => $line) {
+                                if (str_starts_with($line, $library)) {
+                                    $file_lines[$no] = $fileName;
+                                    $found = true;
+                                }
+                            }
+                            if (!$found) {
+                                $file_lines[] = $fileName;
                             }
                         }
                         file_put_contents($seriesFile, implode("\n", $file_lines));

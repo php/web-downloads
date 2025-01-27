@@ -1,0 +1,172 @@
+<?php
+
+namespace Console\Command;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+use App\Console\Command\WinlibsCommand;
+use App\Helpers\Helpers;
+use ZipArchive;
+
+class WinlibsCommandTest extends TestCase
+{
+    private string $baseDirectory;
+    
+    private string $winlibsDirectory;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->baseDirectory = sys_get_temp_dir() . '/winlibs_test';
+        mkdir($this->baseDirectory, 0755, true);
+        putenv("BASE_DIRECTORY=$this->baseDirectory");
+
+        $this->winlibsDirectory = $this->baseDirectory . '/winlibs';
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        (new Helpers)->rmdirr($this->baseDirectory);
+    }
+
+    #[DataProvider('versionProvider')]
+    public function testSuccessfulFileOperations($phpVersion, $vsVersion, $arch, $stability): void
+    {
+        mkdir($this->winlibsDirectory . '/lib', 0755, true);
+
+        $library = 'lib';
+        $ref = '2.0.0';
+        $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
+
+        file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => $stability
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/lib/lib-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString("dummy_file.txt", "dummy content");
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+
+        $result = $command->handle();
+
+        $this->assertEquals(0, $result, "Command should return success.");
+        $this->assertStringEqualsFile($seriesFilePath, "lib-$ref-$vsVersion-$arch.zip", "Series file should be updated correctly.");
+    }
+
+    #[DataProvider('versionProvider')]
+    public function testSuccessfulFileOperationsWithExistingSeriesFile($phpVersion, $vsVersion, $arch, $stability): void
+    {
+        mkdir($this->winlibsDirectory . '/lib', 0755, true);
+        mkdir($this->baseDirectory . '/php-sdk/deps/series', 0755, true);
+
+        $library = 'lib';
+        $ref = '2.0.0';
+        $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
+
+        file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => $stability
+        ]));
+
+        file_put_contents($seriesFilePath, "existing-$ref-$vsVersion-$arch.zip");
+
+        $zipPath = $this->winlibsDirectory . "/lib/lib-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString("dummy_file.txt", "dummy content");
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+
+        $result = $command->handle();
+
+        $this->assertEquals(0, $result, "Command should return success.");
+        $this->assertStringContainsString("lib-$ref-$vsVersion-$arch.zip", file_get_contents($seriesFilePath), "Series file should be updated correctly.");
+    }
+
+    #[DataProvider('versionProvider')]
+    public function testSuccessfulFileOperationsWithExistingOldLibraryInSeriesFile($phpVersion, $vsVersion, $arch, $stability): void
+    {
+        mkdir($this->winlibsDirectory . '/lib', 0755, true);
+        mkdir($this->baseDirectory . '/php-sdk/deps/series', 0755, true);
+
+        $library = 'lib';
+        $ref = '2.0.0';
+        $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
+
+        file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => $stability
+        ]));
+
+        file_put_contents($seriesFilePath, "lib-1.0.0-$vsVersion-$arch.zip");
+
+        $zipPath = $this->winlibsDirectory . "/lib/lib-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString("dummy_file.txt", "dummy content");
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+
+        $result = $command->handle();
+
+        $this->assertEquals(0, $result, "Command should return success.");
+        $this->assertStringContainsString("lib-$ref-$vsVersion-$arch.zip", file_get_contents($seriesFilePath), "Series file should be updated correctly.");
+        $this->assertStringNotContainsString("lib-1.0.0-$vsVersion-$arch.zip", file_get_contents($seriesFilePath), "Series file should be updated correctly.");
+    }
+
+    public static function versionProvider(): array
+    {
+        return [
+            ['7.4', 'vs15', 'x86', 'stable'],
+            ['8.0', 'vs16', 'x64', 'staging'],
+            ['8.1', 'vs17', 'x86', 'stable'],
+        ];
+    }
+
+    public function testCommandHandlesMissingBaseDirectory(): void
+    {
+        $command = new WinlibsCommand();
+        ob_start();
+        $result = $command->handle();
+        $output = ob_get_clean();
+        $this->assertEquals('Base directory is required', $output);
+        $this->assertEquals(1, $result);
+    }
+
+    public function testHandlesCorruptDataFile(): void
+    {
+        $this->winlibsDirectory = $this->baseDirectory . '/winlibs/lib';
+        mkdir($this->winlibsDirectory, 0755, true);
+        file_put_contents($this->winlibsDirectory . '/data.json', '{corrupt json');
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        ob_start();
+        $result = $command->handle();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('Syntax error', $output);
+        $this->assertEquals(1, $result);
+    }
+}

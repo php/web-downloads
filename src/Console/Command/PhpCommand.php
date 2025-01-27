@@ -3,6 +3,7 @@
 namespace App\Console\Command;
 
 use App\Console\Command;
+use App\Helpers\Helpers;
 use DateTimeImmutable;
 use Exception;
 use ZipArchive;
@@ -22,7 +23,12 @@ class PhpCommand extends Command
                 throw new Exception('Base directory is required');
             }
 
-            $files = glob(getenv('BUILDS_DIRECTORY') . '/php/*.zip');
+            $zips_directory = getenv('BUILDS_DIRECTORY') . '/php';
+            if(!is_dir($zips_directory)) {
+                return Command::SUCCESS;
+            }
+
+            $files = glob($zips_directory . '/*.zip');
 
             // We lock the files we are working on
             // so that we don't process them again if the command is run again
@@ -40,19 +46,18 @@ class PhpCommand extends Command
                 $tempDirectory = "/tmp/php-" . $hash;
 
                 if (is_dir($tempDirectory)) {
-                    rmdir($tempDirectory);
+                    (new Helpers)->rmdirr($tempDirectory);
                 }
                 mkdir($tempDirectory, 0755, true);
 
                 $zip = new ZipArchive();
-
                 if ($zip->open($filepath) === TRUE) {
                     if ($zip->extractTo($tempDirectory) === FALSE) {
-                        throw new Exception('Failed to extract the extension build');
+                        throw new Exception('Failed to extract the php build');
                     }
                     $zip->close();
                 } else {
-                    throw new Exception('Failed to extract the extension');
+                    throw new Exception('Failed to extract the php build');
                 }
 
                 unlink($filepath);
@@ -63,20 +68,33 @@ class PhpCommand extends Command
 
                 $this->generateListing($destinationDirectory);
 
-                rmdir($tempDirectory);
+                (new Helpers)->rmdirr($tempDirectory);
 
                 unlink($filepath . '.lock');
             }
             return Command::SUCCESS;
         } catch (Exception $e) {
             echo $e->getMessage();
+            $tempDirectories = glob('/tmp/php-*');
+            if($tempDirectories) {
+                foreach ($tempDirectories as $tempDirectory) {
+                    (new Helpers)->rmdirr($tempDirectory);
+                }
+            }
             return Command::FAILURE;
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function getDestinationDirectory(string $tempDirectory): string
     {
-        $testPackFile = basename(glob($tempDirectory . '/php-test-pack-*.zip')[0]);
+        $testPackFiles = glob($tempDirectory . '/php-test-pack-*.zip');
+        if(empty($testPackFiles)) {
+            throw new Exception('No test pack found in the artifact');
+        }
+        $testPackFile = basename($testPackFiles[0]);
         $testPackFileName = str_replace('.zip', '', $testPackFile);
         $version = explode('-', $testPackFileName)[3];
         return $this->baseDirectory . (preg_match('/^\d+\.\d+\.\d+$/', $version) ? '/releases' : '/qa');
@@ -95,7 +113,7 @@ class PhpCommand extends Command
                 $destination = $destinationDirectory . '/' . $fileName;
                 rename($file, $destination);
             }
-            rmdir($tempDirectory);
+            (new Helpers)->rmdirr($tempDirectory);
             $this->copyBuildsToArchive($destinationDirectory, $version);
         } else {
             throw new Exception('No builds found in the artifact');
@@ -105,11 +123,14 @@ class PhpCommand extends Command
     private function copyBuildsToArchive(string $directory, string $version): void
     {
         $version_short = substr($version, 0, 3);
-        $files = glob($directory . '/php*-' . $version_short . '-*.zip');
+        $files = glob($directory . '/php*' . $version_short . '*.zip');
+        if(!is_dir($directory . '/archive')) {
+            mkdir($directory . '/archive', 0755, true);
+        }
         foreach ($files as $file) {
             $fileVersion = $this->getFileVersion($file);
             if ($fileVersion) {
-                copy($directory . '/' . basename($file), $directory . '/archive/' . $file);
+                copy($directory . '/' . basename($file), $directory . '/archive/' . basename($file));
                 if (version_compare($fileVersion, $version) < 0) {
                     unlink($file);
                 }
@@ -119,8 +140,15 @@ class PhpCommand extends Command
 
     private function getFileVersion(string $file): string
     {
-        $file = preg_replace('/^php-((debug|devel|test)-pack)?/', '', $file);
-        return explode('-', $file)[0];
+        $file = basename($file);
+        if(preg_match('/^php-((debug|devel|test)-pack-).*/', $file)) {
+            $pattern = '/^php-((debug|devel|test)-pack-)?/';
+        } else {
+            $pattern = '/php-/';
+        }
+        $file = preg_replace($pattern, '', $file);
+        $parts = explode('-', $file);
+        return str_replace('.zip', '', $parts[0]);
     }
 
     /**
@@ -147,9 +175,9 @@ class PhpCommand extends Command
             }
             $releases[$version_short][$key]['mtime'] = $mtime;
             $releases[$version_short][$key]['zip'] = [
-                'path' => $file_ori,
+                'path' => basename($file_ori),
                 'size' => $this->bytes2string(filesize($file_ori)),
-                'sha256' => $sha256sums[strtolower($file_ori)]
+                'sha256' => $sha256sums[strtolower(basename($file_ori))]
             ];
             $namingPattern = $parts['version'] . ($parts['nts'] ? '-' . $parts['nts'] : '') . '-Win32-' . $parts['vc'] . '-' . $parts['arch'] . ($parts['ts'] ? '-' . $parts['ts'] : '');
             $build_types = [
@@ -162,10 +190,19 @@ class PhpCommand extends Command
             foreach ($build_types as $type => $fileName) {
                 $filePath = $directory . '/' . $fileName;
                 if (file_exists($filePath)) {
-                    $releases[$version_short][$type] = [
-                        'path' => $fileName,
-                        'size' => $this->bytes2string(filesize($filePath))
-                    ];
+                    if(in_array($type, ['test_pack', 'source'])) {
+                        $releases[$version_short][$type] = [
+                            'path' => $fileName,
+                            'size' => $this->bytes2string(filesize($filePath)),
+                            'sha256' => $sha256sums[strtolower(basename($file_ori))]
+                        ];
+                    } else {
+                        $releases[$version_short][$key][$type] = [
+                            'path' => $fileName,
+                            'size' => $this->bytes2string(filesize($filePath)),
+                            'sha256' => $sha256sums[strtolower(basename($file_ori))]
+                        ];
+                    }
                 }
             }
         }
@@ -206,16 +243,30 @@ class PhpCommand extends Command
 
     private function updateLatestBuilds($releases, $directory): void
     {
+        if(!is_dir($directory . '/latest')) {
+            mkdir($directory . '/latest', 0755, true);
+        }
         foreach ($releases as $versionShort => $release) {
-            $latestFileName = str_replace($release['version'], $versionShort, $release['path']);
-            $latestFileName = str_replace('.zip', '-latest.zip', $latestFileName);
-            copy($directory . '/' . $release['path'], $directory . '/latest/' . $latestFileName);
+            foreach ($release as $value) {
+                $filePath = $value['path'] ?? $value['zip']['path'] ?? null;
+                if($filePath === null) {
+                    continue;
+                } else {
+                    $filePath = basename($filePath);
+                }
+                $latestFileName = str_replace($release['version'], $versionShort, $filePath);
+                $latestFileName = str_replace('.zip', '-latest.zip', $latestFileName);
+                copy($directory . '/' . $filePath, $directory . '/latest/' . $latestFileName);
+            }
         }
     }
 
     private function getSha256Sums($directory): array
     {
         $result = [];
+        if(!file_exists("$directory/sha256sum.txt")) {
+            file_put_contents("$directory/sha256sum.txt", '');
+        }
         $sha_file = fopen("$directory/sha256sum.txt", 'w');
         foreach (scandir($directory) as $filename) {
             if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
@@ -229,7 +280,7 @@ class PhpCommand extends Command
         return $result;
     }
 
-    private function bytes2string(int $size): float
+    private function bytes2string(int $size): string
     {
         $sizes = ['YB', 'ZB', 'EB', 'PB', 'TB', 'GB', 'MB', 'kB', 'B'];
 

@@ -20,7 +20,13 @@ class PeclCommand extends Command
                 throw new Exception('Base directory is required');
             }
 
-            $files = glob(getenv('BUILDS_DIRECTORY') . '/php/*.zip');
+            $zips_directory = getenv('BUILDS_DIRECTORY') . '/pecl';
+            if(!is_dir($zips_directory)) {
+                return Command::SUCCESS;
+            }
+
+            $files = glob($zips_directory . '/*.zip');
+
 
             // We lock the files we are working on
             // so that we don't process them again if the command is run again

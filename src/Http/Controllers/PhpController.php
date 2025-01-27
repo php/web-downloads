@@ -48,7 +48,7 @@ class PhpController extends BaseController
 
         $filepath = getenv('BUILDS_DIRECTORY') . "/php/php-" . $hash . ".tar.gz";
 
-        FetchArtifact::handle($url, $filepath, $token);
+        (new FetchArtifact)->handle($url, $filepath, $token);
 
         if (!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the PHP build');

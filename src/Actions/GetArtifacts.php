@@ -2,9 +2,11 @@
 
 namespace App\Actions;
 
+use App\Helpers\Helpers;
+
 class GetArtifacts
 {
-    public static function handle($workflow_run_id, $token): void
+    public function handle($workflow_run_id, $token): void
     {
         $ch = curl_init();
 
@@ -33,14 +35,13 @@ class GetArtifacts
             $artifacts = json_decode($response, true);
             $workflowRunDirectory = getenv('BUILDS_DIRECTORY') . "/winlibs/" . $workflow_run_id;
             if (is_dir($workflowRunDirectory)) {
-                rmdir($workflowRunDirectory);
+                (new Helpers)->rmdirr($workflowRunDirectory);
             }
             mkdir($workflowRunDirectory, 0755, true);
             foreach ($artifacts['artifacts'] as $artifact) {
                 $filepath = $workflowRunDirectory . "/" . $artifact['name'] . ".zip";
-                FetchArtifact::handle($artifact['archive_download_url'], $filepath, $token);
+                (new FetchArtifact)->handle($artifact['archive_download_url'], $filepath, $token);
             }
         }
     }
-
 }
