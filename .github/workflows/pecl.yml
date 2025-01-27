@@ -1,0 +1,22 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Artifact URL'
+      extension:
+        description: 'Extension Name'
+      ref:
+        description: 'Extension Ref'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          curl \
+          --requests POST \
+          --location https://downloads.php.net/pecl \
+          --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
+          --data '{ "url": "${{ inputs.url }}", "extension": "${{ inputs.extension }}", "ref": "${{ inputs.ref }}" }'
