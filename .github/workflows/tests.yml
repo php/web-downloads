@@ -1,0 +1,21 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Php
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+
+    - name: Install dependencies
+      uses: ramsey/composer-install@v3
+
+    - name: Run tests
+      run: vendor/bin/phpunit --coverage-text

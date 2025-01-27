@@ -4,9 +4,9 @@ namespace App\Console;
 
 abstract class Command
 {
-    public const int SUCCESS = 0;
-    public const int FAILURE = 1;
-    public const int INVALID = 2;
+    public const SUCCESS = 0;
+    public const FAILURE = 1;
+    public const INVALID = 2;
 
     protected string $signature = '';
 
@@ -57,11 +57,18 @@ abstract class Command
         return $this->description;
     }
 
-    public function getArgument($index) {
+    public function getArgument($index): mixed
+    {
         return $this->arguments[$index] ?? null;
     }
 
-    public function getOption($name) {
+    public function getOption($name): mixed
+    {
         return $this->options[$name] ?? null;
+    }
+
+    public function setOption($name, $value): void
+    {
+        $this->options[$name] = $value;
     }
 }

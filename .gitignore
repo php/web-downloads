@@ -1,0 +1,5 @@
+/vendor/
+/builds/
+xdebug-filter.php
+.phpunit.result.cache
+.phpunit.cache

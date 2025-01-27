@@ -9,7 +9,7 @@ use Exception;
 
 class PeclController extends BaseController
 {
-    protected function validate(mixed $data): bool
+    public function validate(array $data): bool
     {
         $validator = new Validator([
             'url' => 'required|url',
@@ -29,7 +29,7 @@ class PeclController extends BaseController
         return $valid;
     }
 
-    protected function execute(array $data): void
+    public function execute(array $data): void
     {
         try {
             extract($data);
@@ -43,11 +43,11 @@ class PeclController extends BaseController
     /**
      * @throws Exception
      */
-    private function fetchExtension(string $extension, string $ref, string $url, string $token): void
+    protected function fetchExtension(string $extension, string $ref, string $url, string $token): void
     {
         $filepath = getenv('BUILDS_DIRECTORY') . "/pecl/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
 
-        FetchArtifact::handle($url, $filepath, $token);
+        (new FetchArtifact)->handle($url, $filepath, $token);
 
         if (!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the extension');

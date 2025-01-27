@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Http\BaseController;
+use JsonException;
 
 class Router
 {
@@ -22,6 +23,9 @@ class Router
         ];
     }
 
+    /**
+     * @throws JsonException
+     */
     public function handleRequest(): void
     {
         $path = $_SERVER['REQUEST_URI'];
