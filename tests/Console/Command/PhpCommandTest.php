@@ -17,14 +17,12 @@ class PhpCommandTest extends TestCase
         parent::setUp();
 
         // Set up temporary directories
-        $this->baseDirectory = sys_get_temp_dir() . '/php_command_base';
+        $this->baseDirectory = sys_get_temp_dir() . '/php_test_base';
         $this->buildsDirectory = sys_get_temp_dir() . '/builds';
 
         mkdir($this->baseDirectory . '/releases', 0755, true);
         mkdir($this->baseDirectory . '/qa', 0755, true);
         mkdir($this->buildsDirectory . '/php', 0755, true);
-
-        putenv("BUILDS_DIRECTORY=$this->buildsDirectory");
     }
 
     protected function tearDown(): void
@@ -98,6 +96,7 @@ class PhpCommandTest extends TestCase
     {
         $command = new PhpCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
 
         $this->stageBuilds($phpZips, $this->buildsDirectory . '/php/test.zip');
 
@@ -113,6 +112,7 @@ class PhpCommandTest extends TestCase
     {
         $command = new PhpCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
 
         $this->stageBuilds(['php-8.4.0-dev-Win32-vs17-x64.zip'], $this->buildsDirectory . '/php/test.zip');
         ob_start();
@@ -138,6 +138,7 @@ class PhpCommandTest extends TestCase
         file_put_contents($zipPath, "invalid zip content");
         $command = new PhpCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         ob_start();
         $result = $command->handle();
         ob_get_clean();
@@ -148,6 +149,7 @@ class PhpCommandTest extends TestCase
     {
         $command = new PhpCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         $command->handle();
         $tempDirectory = "/tmp/php-*";
         $this->assertEmpty(glob($tempDirectory));

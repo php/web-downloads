@@ -8,7 +8,7 @@ use ZipArchive;
 
 class PeclCommand extends Command
 {
-    protected string $signature = 'pecl:add --base-directory=';
+    protected string $signature = 'pecl:add --base-directory= --builds-directory=';
 
     protected string $description = 'Add pecl extensions';
 
@@ -20,7 +20,12 @@ class PeclCommand extends Command
                 throw new Exception('Base directory is required');
             }
 
-            $zips_directory = getenv('BUILDS_DIRECTORY') . '/pecl';
+            $buildsDirectory = $this->getOption('builds-directory');
+            if (!$buildsDirectory) {
+                throw new Exception('Build directory is required');
+            }
+
+            $zips_directory = $buildsDirectory . '/pecl';
             if(!is_dir($zips_directory)) {
                 return Command::SUCCESS;
             }

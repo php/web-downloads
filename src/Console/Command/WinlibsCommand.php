@@ -8,7 +8,7 @@ use Exception;
 
 class WinlibsCommand extends Command
 {
-    protected string $signature = 'winlibs:add --base-directory=';
+    protected string $signature = 'winlibs:add --base-directory= --builds-directory=';
     protected string $description = 'Add winlibs dependencies';
 
     protected ?string $baseDirectory = null;
@@ -21,7 +21,12 @@ class WinlibsCommand extends Command
                 throw new Exception('Base directory is required');
             }
 
-            $buildDirectories = glob($this->baseDirectory . '/winlibs/*', GLOB_ONLYDIR);
+            $buildsDirectory = $this->getOption('builds-directory');
+            if (!$buildsDirectory) {
+                throw new Exception('Build directory is required');
+            }
+
+            $buildDirectories = glob($buildsDirectory . '/winlibs/*', GLOB_ONLYDIR);
 
             // We lock the Directories we are working on
             // so that we don't process them again if the command is run again

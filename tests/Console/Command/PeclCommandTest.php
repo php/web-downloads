@@ -22,8 +22,6 @@ class PeclCommandTest extends TestCase
         mkdir($this->baseDirectory, 0755, true);
         mkdir($this->buildsDirectory . '/pecl', 0755, true);
 
-        putenv("BUILDS_DIRECTORY=$this->buildsDirectory");
-
         $zipPath = $this->buildsDirectory . '/pecl/test.zip';
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
@@ -44,6 +42,7 @@ class PeclCommandTest extends TestCase
     {
         $command = new PeclCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         $result = $command->handle();
         $this->assertEquals(0, $result);
 
@@ -66,6 +65,7 @@ class PeclCommandTest extends TestCase
 
         (new Helpers)->rmdirr($this->buildsDirectory . '/pecl');
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         $result = $command->handle();
         $this->assertEquals(0, $result);
     }
@@ -77,6 +77,7 @@ class PeclCommandTest extends TestCase
 
         $command = new PeclCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         ob_start();
         $result = $command->handle();
         $output = ob_get_clean();
@@ -90,6 +91,7 @@ class PeclCommandTest extends TestCase
         mkdir($destinationDirectory, 0555, true);
         $command = new PeclCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         ob_start();
         $result = @$command->handle();
         $output = ob_get_clean();

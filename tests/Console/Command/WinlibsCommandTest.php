@@ -17,17 +17,18 @@ class WinlibsCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->baseDirectory = sys_get_temp_dir() . '/winlibs_test';
+        $this->baseDirectory = sys_get_temp_dir() . '/winlibs_test_base';
+        $this->buildsDirectory = sys_get_temp_dir() . '/builds';
         mkdir($this->baseDirectory, 0755, true);
-        putenv("BASE_DIRECTORY=$this->baseDirectory");
 
-        $this->winlibsDirectory = $this->baseDirectory . '/winlibs';
+        $this->winlibsDirectory = $this->buildsDirectory . '/winlibs';
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
         (new Helpers)->rmdirr($this->baseDirectory);
+        (new Helpers)->rmdirr($this->buildsDirectory);
     }
 
     #[DataProvider('versionProvider')]
@@ -56,6 +57,7 @@ class WinlibsCommandTest extends TestCase
 
         $command = new WinlibsCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
 
         $result = $command->handle();
 
@@ -92,6 +94,7 @@ class WinlibsCommandTest extends TestCase
 
         $command = new WinlibsCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
 
         $result = $command->handle();
 
@@ -128,6 +131,7 @@ class WinlibsCommandTest extends TestCase
 
         $command = new WinlibsCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
 
         $result = $command->handle();
 
@@ -157,12 +161,12 @@ class WinlibsCommandTest extends TestCase
 
     public function testHandlesCorruptDataFile(): void
     {
-        $this->winlibsDirectory = $this->baseDirectory . '/winlibs/lib';
-        mkdir($this->winlibsDirectory, 0755, true);
-        file_put_contents($this->winlibsDirectory . '/data.json', '{corrupt json');
+        mkdir($this->winlibsDirectory . '/lib', 0755, true);
+        file_put_contents($this->winlibsDirectory . '/lib/data.json', '{corrupt json');
 
         $command = new WinlibsCommand();
         $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
         ob_start();
         $result = $command->handle();
         $output = ob_get_clean();

@@ -10,7 +10,7 @@ use ZipArchive;
 
 class PhpCommand extends Command
 {
-    protected string $signature = 'php:add --base-directory=';
+    protected string $signature = 'php:add --base-directory= --builds-directory=';
     protected string $description = 'Add php builds';
 
     protected ?string $baseDirectory = null;
@@ -23,7 +23,12 @@ class PhpCommand extends Command
                 throw new Exception('Base directory is required');
             }
 
-            $zips_directory = getenv('BUILDS_DIRECTORY') . '/php';
+            $buildsDirectory = $this->getOption('builds-directory');
+            if (!$buildsDirectory) {
+                throw new Exception('Build directory is required');
+            }
+
+            $zips_directory = $buildsDirectory . '/php';
             if(!is_dir($zips_directory)) {
                 return Command::SUCCESS;
             }
