@@ -46,7 +46,13 @@ class PhpController extends BaseController
     {
         $hash = hash('sha256', $url) . strtotime('now');
 
-        $filepath = getenv('BUILDS_DIRECTORY') . "/php/php-" . $hash . ".tar.gz";
+        $directory = getenv('BUILDS_DIRECTORY') . "/php";
+
+        $filepath = $directory . "/php-" . $hash . ".tar.gz";
+
+        if(!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
 
         (new FetchArtifact)->handle($url, $filepath, $token);
 

@@ -45,7 +45,12 @@ class PeclController extends BaseController
      */
     protected function fetchExtension(string $extension, string $ref, string $url, string $token): void
     {
-        $filepath = getenv('BUILDS_DIRECTORY') . "/pecl/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
+        $directory = getenv('BUILDS_DIRECTORY') . "/pecl";
+        $filepath = $directory . "/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
+
+        if(!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
 
         (new FetchArtifact)->handle($url, $filepath, $token);
 
