@@ -1,4 +1,4 @@
-name: Run tests
+name: Upload PECL Extension
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - run: |
           curl \
-          --requests POST \
+          --request POST \
           --location https://downloads.php.net/pecl \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
           --data '{ "url": "${{ inputs.url }}", "extension": "${{ inputs.extension }}", "ref": "${{ inputs.ref }}" }'

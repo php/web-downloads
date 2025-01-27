@@ -1,4 +1,4 @@
-name: Run tests
+name: Upload Winlibs builds
 
 on:
   workflow_dispatch:
@@ -31,7 +31,7 @@ jobs:
     steps:
       - run: |
           curl \
-          --requests POST \
+          --request POST \
           --location https://downloads.php.net/winlibs \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
           --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version": "${{ inputs.vs_version }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}" }'
