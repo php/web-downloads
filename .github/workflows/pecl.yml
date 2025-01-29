@@ -17,6 +17,6 @@ jobs:
       - run: |
           curl \
           --request POST \
-          --location https://downloads.php.net/pecl \
+          --location https://downloads.php.net/api/pecl \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
           --data '{ "url": "${{ inputs.url }}", "extension": "${{ inputs.extension }}", "ref": "${{ inputs.ref }}" }'

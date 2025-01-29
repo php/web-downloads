@@ -32,6 +32,6 @@ jobs:
       - run: |
           curl \
           --request POST \
-          --location https://downloads.php.net/winlibs \
+          --location https://downloads.php.net/api/winlibs \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
           --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version": "${{ inputs.vs_version }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}" }'
