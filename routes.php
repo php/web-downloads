@@ -7,8 +7,8 @@ use App\Http\Controllers\WinlibsController;
 use App\Router;
 
 $router = new Router();
-$router->registerRoute('/', 'GET', IndexController::class);
-$router->registerRoute('/pecl', 'POST', PeclController::class, true);
-$router->registerRoute('/winlibs', 'POST', WinlibsController::class, true);
-$router->registerRoute('/php', 'POST', PhpController::class, true);
+$router->registerRoute('/api', 'GET', IndexController::class);
+$router->registerRoute('/api/pecl', 'POST', PeclController::class, true);
+$router->registerRoute('/api/winlibs', 'POST', WinlibsController::class, true);
+$router->registerRoute('/api/php', 'POST', PhpController::class, true);
 $router->handleRequest();
