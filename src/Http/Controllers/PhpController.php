@@ -48,7 +48,7 @@ class PhpController extends BaseController
 
         $directory = getenv('BUILDS_DIRECTORY') . "/php";
 
-        $filepath = $directory . "/php-" . $hash . ".tar.gz";
+        $filepath = $directory . "/php-" . $hash . ".zip";
 
         if(!is_dir($directory)) {
             mkdir($directory, 0755, true);
