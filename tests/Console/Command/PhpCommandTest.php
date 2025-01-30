@@ -20,8 +20,8 @@ class PhpCommandTest extends TestCase
         $this->baseDirectory = sys_get_temp_dir() . '/php_test_base';
         $this->buildsDirectory = sys_get_temp_dir() . '/builds';
 
-        mkdir($this->baseDirectory . '/releases', 0755, true);
-        mkdir($this->baseDirectory . '/qa', 0755, true);
+        mkdir($this->baseDirectory . '/releases/archives', 0755, true);
+        mkdir($this->baseDirectory . '/qa/archives', 0755, true);
         mkdir($this->buildsDirectory . '/php', 0755, true);
     }
 

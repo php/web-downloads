@@ -129,13 +129,13 @@ class PhpCommand extends Command
     {
         $version_short = substr($version, 0, 3);
         $files = glob($directory . '/php*' . $version_short . '*.zip');
-        if(!is_dir($directory . '/archive')) {
-            mkdir($directory . '/archive', 0755, true);
+        if(!is_dir($directory . '/archives')) {
+            mkdir($directory . '/archives', 0755, true);
         }
         foreach ($files as $file) {
             $fileVersion = $this->getFileVersion($file);
             if ($fileVersion) {
-                copy($directory . '/' . basename($file), $directory . '/archive/' . basename($file));
+                copy($directory . '/' . basename($file), $directory . '/archives/' . basename($file));
                 if (version_compare($fileVersion, $version) < 0) {
                     unlink($file);
                 }
@@ -252,17 +252,14 @@ class PhpCommand extends Command
             mkdir($directory . '/latest', 0755, true);
         }
         foreach ($releases as $versionShort => $release) {
-            foreach ($release as $value) {
-                $filePath = $value['path'] ?? $value['zip']['path'] ?? null;
-                if($filePath === null) {
-                    continue;
-                } else {
-                    $filePath = basename($filePath);
+            array_walk_recursive($release, function ($value, $key) use($directory, $versionShort, $release) {
+                if ($key === 'path') {
+                    $filePath = basename($value);
+                    $latestFileName = str_replace($release['version'], $versionShort, $filePath);
+                    $latestFileName = str_replace('.zip', '-latest.zip', $latestFileName);
+                    copy($directory . '/' . $filePath, $directory . '/latest/' . $latestFileName);
                 }
-                $latestFileName = str_replace($release['version'], $versionShort, $filePath);
-                $latestFileName = str_replace('.zip', '-latest.zip', $latestFileName);
-                copy($directory . '/' . $filePath, $directory . '/latest/' . $latestFileName);
-            }
+            });
         }
     }
 
