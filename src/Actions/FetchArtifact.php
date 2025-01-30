@@ -14,6 +14,7 @@ class FetchArtifact
         if (str_contains($url, 'api.github.com')) {
             $headers = [
                 'Accept: application/vnd.github+json',
+                'User-Agent: PHP Web Downloads',
             ];
 
             if ($token) {
