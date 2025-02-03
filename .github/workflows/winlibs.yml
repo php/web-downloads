@@ -1,5 +1,5 @@
 name: Upload Winlibs builds
-
+run-name: Upload Winlibs builds for ${{ inputs.library }}-${{ inputs.ref }}
 on:
   workflow_dispatch:
     inputs:
@@ -29,7 +29,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: |
+      - name: Upload
+        run: |
           curl \
           --request POST \
           --location https://downloads.php.net/api/winlibs \

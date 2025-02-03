@@ -1,5 +1,5 @@
 name: Upload PECL Extension
-
+run-name: Upload PECL builds for ${{ inputs.extension }}-${{ inputs.ref }}
 on:
   workflow_dispatch:
     inputs:
@@ -10,11 +10,12 @@ on:
       ref:
         description: 'Extension Ref'
 jobs:
-  test:
+  run:
     runs-on: ubuntu-latest
 
     steps:
-      - run: |
+      - name: Upload
+        run: |
           curl \
           --request POST \
           --location https://downloads.php.net/api/pecl \

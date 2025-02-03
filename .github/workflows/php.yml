@@ -1,17 +1,22 @@
 name: Upload PHP Builds
-
+run-name: Upload PHP builds for ${{ inputs.php-version }}
 on:
   workflow_dispatch:
     inputs:
+      php-version:
+        description: 'PHP version to build'
+        required: true
       url:
         description: 'Artifact URL'
+        required: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - run: |
+      - name: Upload
+        run: |
           curl \
           --request POST \
           --location https://downloads.php.net/api/php \
