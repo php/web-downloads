@@ -97,11 +97,11 @@ class GetListingTest extends TestCase
 
     public function testGetSha256SumsCreatesFileAndReturnsHashes(): void
     {
-        $dummyZip = $this->tempDir . '/dummy.zip';
+        $dummyZip = $this->tempDir . '/php-7.4.34.zip';
         $content = "dummy content";
         file_put_contents($dummyZip, $content);
 
-        $sums = $this->getListing->getSha256Sums($this->tempDir);
+        $sums = $this->getListing->getShaSums($this->tempDir, 'sha256');
 
         $key = strtolower(basename($dummyZip));
         $expectedHash = hash_file('sha256', $dummyZip);

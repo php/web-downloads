@@ -12,7 +12,8 @@ class GetListing
         }
 
         $releases = [];
-        $sha256sums = $this->getSha256Sums($directory);
+        $sha256sums = $this->getShaSums($directory, 'sha256');
+        $this->getShaSums($directory, 'sha1');
         foreach ($builds as $file) {
             $file_ori = $file;
             $mtime = date('Y-M-d H:i:s', filemtime($file));
@@ -59,20 +60,28 @@ class GetListing
         return $releases;
     }
 
-    public function getSha256Sums($directory): array
+    public function getShaSums(string $directory, string $algo): array
     {
         $result = [];
-        if(!file_exists("$directory/sha256sum.txt")) {
-            file_put_contents("$directory/sha256sum.txt", '');
+        $hashes = [];
+        if(!file_exists("$directory/{$algo}sum.txt")) {
+            file_put_contents("$directory/{$algo}sum.txt", '');
         }
-        $sha_file = fopen("$directory/sha256sum.txt", 'w');
         foreach (scandir($directory) as $filename) {
             if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
                 continue;
             }
-            $sha256 = hash_file('sha256', "$directory/$filename");
-            fwrite($sha_file, "$sha256 *$filename\n");
-            $result[strtolower(basename($filename))] = $sha256;
+            $hash = hash_file($algo, "$directory/$filename");
+            $result[strtolower(basename($filename))] = $hash;
+            preg_match('/-(\d+\.\d+)/', $filename, $matches);
+            $hashes[$matches[1]][$filename] = $hash;
+        }
+        $sha_file = fopen("$directory/{$algo}sum.txt", 'w');
+        foreach ($hashes as $version) {
+            foreach ($version as $filename => $hash) {
+                fwrite($sha_file, "$hash *$filename\n");
+            }
+            fwrite($sha_file, "\n");
         }
         fclose($sha_file);
         return $result;
