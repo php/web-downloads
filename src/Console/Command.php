@@ -9,21 +9,19 @@ abstract class Command
     public const INVALID = 2;
 
     protected string $signature = '';
-
     protected string $description = '';
+    protected array $arguments = [];
+    protected array $options = [];
 
-    public function __construct(
-        protected ?int   $argc = null,
-        protected ?array $argv = null,
-        protected array  $arguments = [],
-        protected array  $options = [],
-    ) {
-        if ($argc !== null && $argv !== null) {
-            $this->parse($argc, $argv);
-        }
+    public function __construct() {
+        //
     }
-    abstract public function handle();
 
+    public function setCliArguments(int $argc, array $argv): void {
+        $this->parse($argc, $argv);
+    }
+
+    abstract public function handle(): int;
 
     private function parse($argc, $argv): void {
         $pattern = '/\{(\w+)}|\{--(\w+)}/';

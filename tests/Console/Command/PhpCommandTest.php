@@ -2,6 +2,8 @@
 
 namespace Console\Command;
 
+use App\Actions\GetListing;
+use App\Actions\UpdateReleasesJson;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use App\Console\Command\PhpCommand;
@@ -94,7 +96,7 @@ class PhpCommandTest extends TestCase
     #[DataProvider('buildsProvider')]
     public function testCommandHandlesSuccessfulExecution(array $phpZips): void
     {
-        $command = new PhpCommand();
+        $command = new PhpCommand((new GetListing()), (new UpdateReleasesJson()));
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
 
@@ -110,7 +112,7 @@ class PhpCommandTest extends TestCase
 
     public function testCommandHandlerWithMissingTestPackZip(): void
     {
-        $command = new PhpCommand();
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
 
@@ -124,7 +126,7 @@ class PhpCommandTest extends TestCase
 
     public function testCommandHandlesMissingBaseDirectory(): void
     {
-        $command = new PhpCommand();
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         ob_start();
         $result = $command->handle();
         $output = ob_get_clean();
@@ -136,7 +138,7 @@ class PhpCommandTest extends TestCase
     {
         $zipPath = $this->buildsDirectory . '/php/broken.zip';
         file_put_contents($zipPath, "invalid zip content");
-        $command = new PhpCommand();
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
         ob_start();
@@ -147,7 +149,7 @@ class PhpCommandTest extends TestCase
 
     public function testCleanupAfterCommand(): void
     {
-        $command = new PhpCommand();
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
         $command->handle();

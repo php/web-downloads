@@ -13,7 +13,8 @@ class TestCommand extends Command {
 class CommandTest extends TestCase {
     public function testParseArgumentsAndOptions() {
         $argv = ["script.php", "value", "--option=optValue"];
-        $command = new TestCommand(count($argv), $argv);
+        $command = new TestCommand();
+        $command->setCliArguments(count($argv), $argv);
 
         $this->assertEquals("value", $command->getArgument("arg"), "Argument parsing failed.");
         $this->assertEquals("optValue", $command->getOption("option"), "Option parsing failed.");

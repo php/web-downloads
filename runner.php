@@ -27,12 +27,35 @@ function discoverCommands(string $directory, $argc, $argv): array
         if ($file->isFile() && $file->getExtension() === 'php') {
             $className = getClassName($directory, $file);
             if (is_subclass_of($className, Command::class)) {
-                $instance = new $className($argc, $argv);
+                $instance = resolve($className);
+                $instance->setCliArguments($argc, $argv);
                 $commands[$instance->getSignature()] = $instance;
             }
         }
     }
     return $commands;
+}
+
+function resolve(string $className) {
+    $reflection = new ReflectionClass($className);
+    $constructor = $reflection->getConstructor();
+    if (!$constructor) {
+        return new $className;
+    }
+    $parameters = $constructor->getParameters();
+    $dependencies = [];
+    foreach ($parameters as $parameter) {
+        $type = $parameter->getType();
+        if ($type && !$type->isBuiltin()) {
+            $dependencyClass = $type->getName();
+            $dependencies[] = resolve($dependencyClass);
+        } elseif ($parameter->isDefaultValueAvailable()) {
+            $dependencies[] = $parameter->getDefaultValue();
+        } else {
+            throw new Exception("Cannot resolve dependency: " . $parameter->getName());
+        }
+    }
+    return $reflection->newInstanceArgs($dependencies);
 }
 
 function listCommands(array $commands): void
