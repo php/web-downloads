@@ -49,7 +49,8 @@ class PeclController extends BaseController
         $filepath = $directory . "/$extension-$ref-" . hash('sha256', $url) . strtotime('now') . ".zip";
 
         if(!is_dir($directory)) {
-            mkdir($directory, 0755, true);
+            umask(0);
+            mkdir($directory, 0777, true);
         }
 
         (new FetchArtifact)->handle($url, $filepath, $token);

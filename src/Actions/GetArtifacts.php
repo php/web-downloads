@@ -37,7 +37,8 @@ class GetArtifacts
             if (is_dir($workflowRunDirectory)) {
                 (new Helpers)->rmdirr($workflowRunDirectory);
             }
-            mkdir($workflowRunDirectory, 0755, true);
+            umask(0);
+            mkdir($workflowRunDirectory, 0777, true);
             foreach ($artifacts['artifacts'] as $artifact) {
                 $filepath = $workflowRunDirectory . "/" . $artifact['name'] . ".zip";
                 (new FetchArtifact)->handle($artifact['archive_download_url'], $filepath, $token);
