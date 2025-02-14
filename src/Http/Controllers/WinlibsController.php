@@ -14,9 +14,8 @@ class WinlibsController extends BaseController
             'library' => 'required|string',
             'ref' => 'required|string',
             'workflow_run_id' => 'required|string',
-            'php_versions' => 'required|string|regex:/^\d+\.\d+$}|^master$/',
-            'vs_version' => 'required|string|regex:/^(v[c|s]\d{2})(,v[c|s]\d{2})*$/',
-            'vs_version_targets' => 'required|string|regex:/^v[c|s]\d{2}$/',
+            'php_versions' => 'required|string|regex:/^(?:\d+\.\d+|master)(?:,\s*(?:\d+\.\d+|master))*$/',
+            'vs_version_targets' => 'required|string|regex:/^(v[c|s]\d{2})(,v[c|s]\d{2})*$/',
             'stability' => 'required|string|regex:/^(stable|staging)(,(stable|staging))?$/',
             'token' => 'required|string',
         ]);

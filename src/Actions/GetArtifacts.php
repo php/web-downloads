@@ -10,7 +10,7 @@ class GetArtifacts
     {
         $ch = curl_init();
 
-        $base_url = "https://api.github.com/repos/";
+        $base_url = "https://api.github.com/repos";
 
         $repo = "winlibs/winlib-builder";
 

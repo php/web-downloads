@@ -20,9 +20,17 @@ class Validator
         $this->errors = [];
 
         foreach ($this->rules as $field => $ruleString) {
-            $rulesArray = explode('|', $ruleString);
-            foreach ($rulesArray as $rule) {
-                $ruleParts = explode(':', $rule);
+            $regexPos = strpos($ruleString, 'regex:');
+            if ($regexPos !== false) {
+                $nonRegexPart = substr($ruleString, 0, $regexPos);
+                $nonRegexRules = array_filter(explode('|', rtrim($nonRegexPart, '|')));
+                $regexRule = substr($ruleString, $regexPos);
+                $rules = array_merge($nonRegexRules, [$regexRule]);
+            } else {
+                $rules = array_filter(explode('|', $ruleString));
+            }
+            foreach ($rules as $rule) {
+                $ruleParts = explode(':', $rule, 2);
                 $ruleName = $ruleParts[0];
                 $ruleValue = $ruleParts[1] ?? null;
 

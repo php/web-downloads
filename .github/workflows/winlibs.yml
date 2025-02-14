@@ -15,9 +15,6 @@ on:
       php_versions:
         description: 'PHP Versions'
         required: true
-      vs_version:
-        description: 'VS Versions'
-        required: true
       vs_version_targets:
         description: 'VS Version Targets'
         required: true
