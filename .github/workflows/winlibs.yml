@@ -24,7 +24,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    environment: downloads.php.net
     steps:
       - name: Upload
         run: |
