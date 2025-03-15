@@ -60,21 +60,20 @@ class WinlibsCommand extends Command
         }
     }
 
-    private function parseFiles(array $files): array
+    public function parseFiles(array $files): array
     {
         $data = [];
         foreach ($files as $file) {
             $fileName = basename($file);
-            $fileNameParts = explode('.', $fileName);
-            $parsedFileNameParts = explode('-', $fileName);
-            $archParts = explode('.', $parsedFileNameParts[3]);
+            $pattern = '/^(?P<artifact>.+?)-(?P<version>\d.*)-(?P<vs>vs\d+)-(?P<arch>[^.]+)\.zip$/';
+            preg_match($pattern, $fileName, $matches);
             $data[] = [
-                'file_path' => $file,
-                'file_name' => $fileName,
-                'extension' => $fileNameParts[count($fileNameParts)-1],
-                'artifact_name' => $parsedFileNameParts[0],
-                'vs_version' => $parsedFileNameParts[2],
-                'arch' => $archParts[0],
+                'file_path'     => $file,
+                'file_name'     => $fileName,
+                'extension'     => 'zip',
+                'artifact_name' => $matches['artifact'],
+                'vs_version'    => $matches['vs'],
+                'arch'          => $matches['arch'],
             ];
         }
         return $data;

@@ -173,4 +173,67 @@ class WinlibsCommandTest extends TestCase
         $this->assertStringContainsString('Syntax error', $output);
         $this->assertEquals(1, $result);
     }
+
+
+    #[DataProvider('fileProvider')]
+    public function testParseFiles($file, $expected): void
+    {
+        $command = new WinlibsCommand();
+        $result = $command->parseFiles([$file]);
+        $this->assertEquals($expected, $result[0]);
+    }
+
+    public static function fileProvider(): array
+    {
+        return [
+            ['/tmp/net-snmp-5.7.3-1-vs16-x86.zip', [
+                'file_path'     => '/tmp/net-snmp-5.7.3-1-vs16-x86.zip',
+                'file_name'     => 'net-snmp-5.7.3-1-vs16-x86.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'net-snmp',
+                'vs_version'    => 'vs16',
+                'arch'          => 'x86',
+            ]],
+            ['/tmp/libxml2-2.9.14-1-vs16-x86.zip', [
+                'file_path'     => '/tmp/libxml2-2.9.14-1-vs16-x86.zip',
+                'file_name'     => 'libxml2-2.9.14-1-vs16-x86.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'libxml2',
+                'vs_version'    => 'vs16',
+                'arch'          => 'x86',
+            ]],
+            ['/tmp/c-client-2007f-1-vs16-x86.zip', [
+                'file_path'     => '/tmp/c-client-2007f-1-vs16-x86.zip',
+                'file_name'     => 'c-client-2007f-1-vs16-x86.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'c-client',
+                'vs_version'    => 'vs16',
+                'arch'          => 'x86',
+            ]],
+            ['/tmp/nghttp2-1.57.0-vs16-x86.zip', [
+                'file_path'     => '/tmp/nghttp2-1.57.0-vs16-x86.zip',
+                'file_name'     => 'nghttp2-1.57.0-vs16-x86.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'nghttp2',
+                'vs_version'    => 'vs16',
+                'arch'          => 'x86',
+            ]],
+            ['/tmp/openssl-1.1.1w.pl1-vs16-x86.zip', [
+                'file_path'     => '/tmp/openssl-1.1.1w.pl1-vs16-x86.zip',
+                'file_name'     => 'openssl-1.1.1w.pl1-vs16-x86.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'openssl',
+                'vs_version'    => 'vs16',
+                'arch'          => 'x86',
+            ]],
+            ['/tmp/zlib-1.2.12-vs16-x86.zip', [
+                'file_path'     => '/tmp/zlib-1.2.12-vs16-x86.zip',
+                'file_name'     => 'zlib-1.2.12-vs16-x86.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'zlib',
+                'vs_version'    => 'vs16',
+                'arch'          => 'x86',
+            ]],
+        ];
+    }
 }
