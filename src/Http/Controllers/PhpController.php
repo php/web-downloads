@@ -60,5 +60,7 @@ class PhpController extends BaseController
         if (!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the PHP build');
         }
+
+        chmod($filepath, 0777);
     }
 }

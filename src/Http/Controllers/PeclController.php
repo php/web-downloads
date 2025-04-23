@@ -58,5 +58,7 @@ class PeclController extends BaseController
         if (!file_exists($filepath) || mime_content_type($filepath) !== 'application/zip') {
             throw new Exception('Failed to fetch the extension');
         }
+
+        chmod($filepath, 0777);
     }
 }
