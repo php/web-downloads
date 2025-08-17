@@ -170,6 +170,7 @@ class GetListingTest extends TestCase
         $this->assertEquals(basename($sourceFile), $sourceInfo['path']);
         $expectedSourceSize = $this->getListing->bytes2string(filesize($sourceFile));
         $this->assertEquals($expectedSourceSize, $sourceInfo['size']);
+        $expectedSha256 = hash_file('sha256', $sourceFile);
         $this->assertEquals($expectedSha256, $sourceInfo['sha256']);
 
         $this->assertArrayHasKey('test_pack', $versionData);
@@ -177,6 +178,7 @@ class GetListingTest extends TestCase
         $this->assertEquals(basename($testPackFile), $testPackInfo['path']);
         $expectedTestPackSize = $this->getListing->bytes2string(filesize($testPackFile));
         $this->assertEquals($expectedTestPackSize, $testPackInfo['size']);
+        $expectedSha256 = hash_file('sha256', $testPackFile);
         $this->assertEquals($expectedSha256, $testPackInfo['sha256']);
 
         $this->assertArrayHasKey('debug_pack', $buildDetails);
@@ -184,6 +186,7 @@ class GetListingTest extends TestCase
         $this->assertEquals(basename($debugPackFile), $debugInfo['path']);
         $expectedDebugSize = $this->getListing->bytes2string(filesize($debugPackFile));
         $this->assertEquals($expectedDebugSize, $debugInfo['size']);
+        $expectedSha256 = hash_file('sha256', $debugPackFile);
         $this->assertEquals($expectedSha256, $debugInfo['sha256']);
 
         $this->assertArrayHasKey('devel_pack', $buildDetails);
@@ -191,6 +194,7 @@ class GetListingTest extends TestCase
         $this->assertEquals(basename($develPackFile), $develInfo['path']);
         $expectedDevelSize = $this->getListing->bytes2string(filesize($develPackFile));
         $this->assertEquals($expectedDevelSize, $develInfo['size']);
+        $expectedSha256 = hash_file('sha256', $develPackFile);
         $this->assertEquals($expectedSha256, $develInfo['sha256']);
 
         $this->assertArrayHasKey('installer', $buildDetails);
@@ -198,8 +202,8 @@ class GetListingTest extends TestCase
         $this->assertEquals(basename($installerFile), $installerInfo['path']);
         $expectedInstallerSize = $this->getListing->bytes2string(filesize($installerFile));
         $this->assertEquals($expectedInstallerSize, $installerInfo['size']);
+        $expectedSha256 = hash_file('sha256', $installerFile);
         $this->assertEquals($expectedSha256, $installerInfo['sha256']);
-
         $this->assertFileExists($this->tempDir . '/sha256sum.txt');
     }
 }

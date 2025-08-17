@@ -45,13 +45,13 @@ class GetListing
                         $releases[$version_short][$type] = [
                             'path' => $fileName,
                             'size' => $this->bytes2string(filesize($filePath)),
-                            'sha256' => $sha256sums[strtolower(basename($file_ori))]
+                            'sha256' => $sha256sums[strtolower($fileName)]
                         ];
                     } else {
                         $releases[$version_short][$key][$type] = [
                             'path' => $fileName,
                             'size' => $this->bytes2string(filesize($filePath)),
-                            'sha256' => $sha256sums[strtolower(basename($file_ori))]
+                            'sha256' => $sha256sums[strtolower($fileName)]
                         ];
                     }
                 }
@@ -68,7 +68,7 @@ class GetListing
             file_put_contents("$directory/{$algo}sum.txt", '');
         }
         foreach (scandir($directory) as $filename) {
-            if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
+            if (!in_array(pathinfo($filename, PATHINFO_EXTENSION), ['zip', 'msi'])) {
                 continue;
             }
             $hash = hash_file($algo, "$directory/$filename");
