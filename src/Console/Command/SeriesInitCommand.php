@@ -46,7 +46,7 @@ class SeriesInitCommand extends Command
             foreach ($filteredFiles as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true, 512, JSON_THROW_ON_ERROR);
                 extract($data);
-                $this->initSeriesFiles($series, $series_vs, $target_vs);
+                $this->initSeriesFiles($php_version, $source_vs, $target_vs);
                 unlink($filepath);
                 unlink($filepath . '.lock');
             }
@@ -61,8 +61,8 @@ class SeriesInitCommand extends Command
      * @throws Exception
      */
     private function initSeriesFiles(
-        string $series,
-        string $series_vs,
+        string $php_version,
+        string $source_vs,
         string $target_vs
     ): void
     {
@@ -73,11 +73,14 @@ class SeriesInitCommand extends Command
         }
         foreach(['x86', 'x64'] as $arch) {
             foreach(['stable', 'staging'] as $stability) {
-                $sourceSeries = 'packages-master-' . $series_vs . '-' . $arch . '-' . $stability . '.txt';
+                $sourceSeries = 'packages-master-' . $source_vs . '-' . $arch . '-' . $stability . '.txt';
                 if(!file_exists($baseDirectory . '/' . $sourceSeries)) {
                     throw new Exception("$baseDirectory/$sourceSeries not found");
                 }
-                $destinationFileName = 'packages-' . $series . '-' . $target_vs . '-' . $arch . '-' . $stability . '.txt';
+                $destinationFileName = 'packages-' . $php_version . '-' . $target_vs . '-' . $arch . '-' . $stability . '.txt';
+                if(file_exists($baseDirectory . '/' . $destinationFileName)) {
+                    throw new Exception("$baseDirectory/$destinationFileName already exists");
+                }
                 copy($baseDirectory . '/' . $sourceSeries, $baseDirectory . '/' . $destinationFileName);
             }
         }

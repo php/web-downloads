@@ -125,8 +125,8 @@ curl -i -X POST \
 - Auth: Required
 - Purpose: Initialize a series configuration by writing a JSON file into `BUILDS_DIRECTORY/series`.
 - Request body (JSON):
-    - `series` (string, required)
-    - `series_vs` (string, required): Matches `^v[c|s]\d{2}$`.
+    - `php_version` (string, required): Matches `^\d+.\d+$`.
+    - `source_vs` (string, required): Matches `^v[c|s]\d{2}$`.
     - `target_vs` (string, required): Matches `^v[c|s]\d{2}$`.
 - Success: `200 OK`, empty body.
 - Errors: `400` with validation details if input is invalid.
@@ -138,8 +138,8 @@ curl -i -X POST \
     -H "Authorization: Bearer $AUTH_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{
-            "series": "8.4",
-            "series_vs": "vc15",
+            "php_version": "8.4",
+            "source_vs": "vc15",
             "target_vs": "vs16"
         }' \
     https://downloads.php.net/api/series-init

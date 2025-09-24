@@ -94,8 +94,8 @@ class SeriesInitCommandTest extends TestCase
         mkdir($buildSeriesDir, 0755, true);
         $jsonPath = $buildSeriesDir . '/series-init-task1.json';
         file_put_contents($jsonPath, json_encode([
-            'series'    => $series,
-            'series_vs' => $series_vs,
+            'php_version'    => $series,
+            'source_vs' => $series_vs,
             'target_vs' => $target_vs,
         ]));
 
@@ -149,8 +149,8 @@ class SeriesInitCommandTest extends TestCase
         mkdir($buildSeriesDir, 0755, true);
         $jsonPath = $buildSeriesDir . '/series-init-locked.json';
         file_put_contents($jsonPath, json_encode([
-            'series'    => $series,
-            'series_vs' => $series_vs,
+            'php_version'    => $series,
+            'source_vs' => $series_vs,
             'target_vs' => $target_vs,
         ]));
         touch($jsonPath . '.lock');
@@ -207,8 +207,8 @@ class SeriesInitCommandTest extends TestCase
         mkdir($seriesDir, 0755, true);
         $jsonPath = $seriesDir . '/series-init-task.json';
         file_put_contents($jsonPath, json_encode([
-            'series'    => $series,
-            'series_vs' => $series_vs,
+            'php_version'    => $series,
+            'source_vs' => $series_vs,
             'target_vs' => $target_vs,
         ]));
 
