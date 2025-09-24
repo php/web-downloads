@@ -13,7 +13,6 @@ class SeriesInitController extends BaseController
             'series' => 'required|string',
             'series_vs' => 'required|string|regex:/^v[c|s]\d{2}$/',
             'target_vs' => 'required|string|regex:/^v[c|s]\d{2}$/',
-            'token' => 'required|string',
         ]);
 
         $validator->validate($data);

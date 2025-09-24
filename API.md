@@ -128,7 +128,6 @@ curl -i -X POST \
     - `series` (string, required)
     - `series_vs` (string, required): Matches `^v[c|s]\d{2}$`.
     - `target_vs` (string, required): Matches `^v[c|s]\d{2}$`.
-    - `token` (string, required)
 - Success: `200 OK`, empty body.
 - Errors: `400` with validation details if input is invalid.
 
@@ -141,8 +140,7 @@ curl -i -X POST \
     -d '{
             "series": "8.4",
             "series_vs": "vc15",
-            "target_vs": "vs16",
-            "token": "ghp_..."
+            "target_vs": "vs16"
         }' \
     https://downloads.php.net/api/series-init
 ```
