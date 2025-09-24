@@ -36,6 +36,9 @@ It also has commands to process the downloaded files and update the relevant con
 Code must function on a vanilla PHP 8.2 installation.
 Please keep this in mind before filing a pull request.
 
+## API
+For API documentation, please refer to [API.md](API.md).
+
 ## License
 
 [MIT](LICENSE)
