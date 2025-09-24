@@ -1,0 +1,26 @@
+name: Create series files for new PHP version
+run-name: Series init ${{ inputs.php_version }}
+on:
+  workflow_dispatch:
+    inputs:
+      php_version:
+        description: 'PHP Version'
+        required: true
+      source_vs:
+        description: 'Source VS Version'
+        required: true
+      target_vs:
+        description: 'Target VS Version'
+        required: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: downloads.php.net
+    steps:
+      - name: Run
+        run: |
+          curl \
+          --request POST \
+          --location https://downloads.php.net/api/series-init \
+          --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
+          --data '{ "php_version": "${{ inputs.php_version }}", "source_vs": "${{ inputs.source_vs }}", "target_vs": "${{ inputs.target_vs }}" }'
