@@ -1,0 +1,23 @@
+name: Delete series files
+run-name: Series delete ${{ inputs.php_version }}
+on:
+  workflow_dispatch:
+    inputs:
+      php_version:
+        description: 'PHP Version'
+        required: true
+      vs_version:
+        description: 'VS Version'
+        required: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: downloads.php.net
+    steps:
+      - name: Run
+        run: |
+          curl \
+          --request POST \
+          --location https://downloads.php.net/api/series-delete \
+          --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
+          --data '{ "php_version": "${{ inputs.php_version }}", "vs_version": "${{ inputs.vs_version }}" }'

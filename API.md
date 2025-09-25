@@ -144,3 +144,53 @@ curl -i -X POST \
         }' \
     https://downloads.php.net/api/series-init
 ```
+
+---
+
+### POST /api/series-delete
+
+- Auth: Required
+- Purpose: Queue deletion of existing series files.
+- Request body (JSON):
+    - `php_version` (string, required): Matches `^(\d+\.\d+|master)$`.
+    - `vs_version` (string, required): Matches `^v[c|s]\d{2}$`.
+- Success: `200 OK`, empty body.
+- Errors: `400` with validation details if input is invalid.
+
+Example
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+            "php_version": "8.3",
+            "vs_version": "vs16"
+        }' \
+    https://downloads.php.net/api/series-delete
+```
+
+---
+
+### POST /api/series-stability
+
+- Auth: Required
+- Purpose: Promote the staging series files to stable.
+- Request body (JSON):
+    - `php_version` (string, required): Matches `^(\d+\.\d+|master)$`.
+    - `vs_version` (string, required): Matches `^v[c|s]\d{2}$`.
+- Success: `200 OK`, empty body.
+- Errors: `400` with validation details if input is invalid.
+
+Example
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+            "php_version": "8.3",
+            "vs_version": "vs16"
+        }' \
+    https://downloads.php.net/api/series-stability
+```
