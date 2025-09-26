@@ -29,9 +29,8 @@ class SeriesInitController extends BaseController
 
     protected function execute(array $data): void
     {
-        extract($data);
         $directory = getenv('BUILDS_DIRECTORY') . '/series';
-        $hash = hash('sha256', $php_version) . time();
+        $hash = hash('sha256', $data['php_version']) . time();
         $file = $directory . '/series-init-' . $hash . '.json';
         file_put_contents($file, json_encode($data));
     }

@@ -31,8 +31,7 @@ class PhpController extends BaseController
     protected function execute(array $data): void
     {
         try {
-            extract($data);
-            $this->fetchPhpBuild($url, $token);
+            $this->fetchPhpBuild($data['url'], $data['token']);
         } catch (Exception $exception) {
             http_response_code(500);
             echo 'Error: ' . $exception->getMessage();

@@ -32,8 +32,12 @@ class PeclController extends BaseController
     public function execute(array $data): void
     {
         try {
-            extract($data);
-            $this->fetchExtension($extension, $ref, $url, $token ?? '');
+            $this->fetchExtension(
+                $data['extension'],
+                $data['ref'],
+                $data['url'],
+                $data['token'] ?? ''
+            );
         } catch (Exception $exception) {
             http_response_code(500);
             echo 'Error: ' . $exception->getMessage();

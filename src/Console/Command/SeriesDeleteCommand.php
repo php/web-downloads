@@ -45,8 +45,10 @@ class SeriesDeleteCommand extends Command
 
             foreach ($filteredFiles as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true, 512, JSON_THROW_ON_ERROR);
-                extract($data);
-                $this->deleteSeriesFiles($php_version, $vs_version);
+                $this->deleteSeriesFiles(
+                    $data['php_version'],
+                    $data['vs_version']
+                );
                 unlink($filepath);
                 unlink($filepath . '.lock');
             }

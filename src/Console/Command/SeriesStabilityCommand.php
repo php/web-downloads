@@ -45,8 +45,10 @@ class SeriesStabilityCommand extends Command
 
             foreach ($filteredFiles as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true, 512, JSON_THROW_ON_ERROR);
-                extract($data);
-                $this->promoteSeriesFiles($php_version, $vs_version);
+                $this->promoteSeriesFiles(
+                    $data['php_version'],
+                    $data['vs_version']
+                );
                 unlink($filepath);
                 unlink($filepath . '.lock');
             }

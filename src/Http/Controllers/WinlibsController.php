@@ -34,9 +34,8 @@ class WinlibsController extends BaseController
 
     protected function execute(array $data): void
     {
-        extract($data);
-        (new GetArtifacts)->handle($workflow_run_id, $token);
-        $directory = getenv('BUILDS_DIRECTORY') . '/winlibs/' . $workflow_run_id;
+        (new GetArtifacts)->handle($data['workflow_run_id'], $data['token']);
+        $directory = getenv('BUILDS_DIRECTORY') . '/winlibs/' . $data['workflow_run_id'];
         file_put_contents($directory . '/data.json', json_encode($data));
     }
 }

@@ -45,8 +45,11 @@ class SeriesInitCommand extends Command
 
             foreach ($filteredFiles as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true, 512, JSON_THROW_ON_ERROR);
-                extract($data);
-                $this->initSeriesFiles($php_version, $source_vs, $target_vs);
+                $this->initSeriesFiles(
+                    $data['php_version'],
+                    $data['source_vs'],
+                    $data['target_vs']
+                );
                 unlink($filepath);
                 unlink($filepath . '.lock');
             }

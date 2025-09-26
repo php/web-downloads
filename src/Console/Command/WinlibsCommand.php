@@ -41,12 +41,17 @@ class WinlibsCommand extends Command
 
             foreach ($filteredDirectories as $directoryPath) {
                 $data = json_decode(file_get_contents($directoryPath . '/data.json'), true, 512, JSON_THROW_ON_ERROR);
-                extract($data);
                 $files = glob($directoryPath . '/*.zip');
                 $files = $this->parseFiles($files);
                 if ($files) {
-                    $this->copyFiles($files, $library, $vs_version_targets);
-                    $this->updateSeriesFiles($files, $library, $php_versions, $vs_version_targets, $stability);
+                    $this->copyFiles($files, $data['library'], $data['vs_version_targets']);
+                    $this->updateSeriesFiles(
+                        $files,
+                        $data['library'],
+                        $data['php_versions'],
+                        $data['vs_version_targets'],
+                        $data['stability']
+                    );
                 }
 
                 (new Helpers)->rmdirr($directoryPath);
