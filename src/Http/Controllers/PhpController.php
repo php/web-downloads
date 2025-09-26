@@ -44,7 +44,7 @@ class PhpController extends BaseController
      */
     private function fetchPhpBuild(string $url, string $token): void
     {
-        $hash = hash('sha256', $url) . strtotime('now');
+        $hash = hash('sha256', $url) . time();
 
         $directory = getenv('BUILDS_DIRECTORY') . "/php";
 
