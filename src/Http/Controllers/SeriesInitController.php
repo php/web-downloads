@@ -31,7 +31,7 @@ class SeriesInitController extends BaseController
     {
         extract($data);
         $directory = getenv('BUILDS_DIRECTORY') . '/series';
-        $hash = hash('sha256', $series) . strtotime('now');
+        $hash = hash('sha256', $php_version) . strtotime('now');
         $file = $directory . '/series-init-' . $hash . '.json';
         file_put_contents($file, json_encode($data));
     }
