@@ -10,7 +10,7 @@ class SeriesDeleteController extends BaseController
     protected function validate(array $data): bool
     {
         $validator = new Validator([
-            'php_version' => 'required|string:regex:/^(\d+\.\d+|master)$/',
+            'php_version' => 'required|string|regex:/^(\d+\.\d+|master)$/',
             'vs_version' => 'required|string|regex:/^v[c|s]\d{2}$/',
         ]);
 

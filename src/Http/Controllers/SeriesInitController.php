@@ -10,7 +10,7 @@ class SeriesInitController extends BaseController
     protected function validate(array $data): bool
     {
         $validator = new Validator([
-            'php_version' => 'required|string:regex:/^\d+\.\d+$/',
+            'php_version' => 'required|string|regex:/^\d+\.\d+$/',
             'source_vs' => 'required|string|regex:/^v[c|s]\d{2}$/',
             'target_vs' => 'required|string|regex:/^v[c|s]\d{2}$/',
         ]);
