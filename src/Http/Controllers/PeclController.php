@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
@@ -47,7 +48,7 @@ class PeclController extends BaseController
     /**
      * @throws Exception
      */
-    protected function fetchExtension(string $extension, string $ref, string $url, string $token): void
+    protected function fetchExtension(string $extension, string $ref, string $url, #[\SensitiveParameter] string $token): void
     {
         $directory = getenv('BUILDS_DIRECTORY') . "/pecl";
         $filepath = $directory . "/$extension-$ref-" . hash('sha256', $url) . time() . ".zip";

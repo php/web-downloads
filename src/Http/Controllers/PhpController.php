@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
@@ -41,7 +42,7 @@ class PhpController extends BaseController
     /**
      * @throws Exception
      */
-    private function fetchPhpBuild(string $url, string $token): void
+    private function fetchPhpBuild(string $url, #[\SensitiveParameter] string $token): void
     {
         $hash = hash('sha256', $url) . time();
 

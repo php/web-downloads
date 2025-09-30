@@ -1,10 +1,11 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Actions;
 
 class FetchArtifact
 {
-    public function handle($url, $filepath, $token = null): void
+    public function handle($url, $filepath, #[\SensitiveParameter] $token = null): void
     {
         $ch = curl_init();
         $fp = fopen($filepath, 'w');
