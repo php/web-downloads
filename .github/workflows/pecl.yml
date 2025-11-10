@@ -20,4 +20,4 @@ jobs:
           --request POST \
           --location https://downloads.php.net/api/pecl \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
-          --data '{ "url": "${{ inputs.url }}", "extension": "${{ inputs.extension }}", "ref": "${{ inputs.ref }}" }'
+          --data '{ "url": "${{ inputs.url }}", "extension": "${{ inputs.extension }}", "ref": "${{ inputs.ref }}", "token": "${{ secrets.TOKEN }}" }'

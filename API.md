@@ -60,7 +60,7 @@ curl -i -X POST \
     - `url` (string, required, URL): Direct download URL of the artifact.
     - `extension` (string, required): Extension name (used in filename).
     - `ref` (string, required): Reference (e.g., tag/commit) used in filename.
-    - `token` (string, optional): Used as a GitHub token if the URL points to `api.github.com`.
+    - `token` (string, required): Used as a GitHub token if the URL points to `api.github.com`.
 - Success: `200 OK`.
 - Errors:
     - `400` with validation details if required fields are missing/invalid.

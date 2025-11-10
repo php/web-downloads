@@ -16,6 +16,7 @@ class PeclController extends BaseController
             'url' => 'required|url',
             'extension' => 'required|string',
             'ref' => 'required|string',
+            'token' => 'required|string',
         ]);
 
         $validator->validate($data);
@@ -37,7 +38,7 @@ class PeclController extends BaseController
                 $data['extension'],
                 $data['ref'],
                 $data['url'],
-                $data['token'] ?? ''
+                $data['token'],
             );
         } catch (Exception $exception) {
             http_response_code(500);
