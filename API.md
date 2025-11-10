@@ -25,6 +25,26 @@
 
 ---
 
+### GET /api/list-builds
+
+- Auth: Required
+- Purpose: Enumerate the files under `BUILDS_DIRECTORY` so operators can inspect available build artifacts.
+- Request body: none (GET request).
+- Success: `200 OK` with JSON payload `{ "builds": [ { "path": "relative/path", "size": 1234, "modified": "2025-09-30T12:34:56+00:00" }, ... ] }`.
+- Errors:
+    - `401` if the bearer token is missing or invalid.
+    - `500` with `{ "error": "Builds directory not configured or missing." }` if `BUILDS_DIRECTORY` is unset or the directory does not exist.
+
+Example
+
+```bash
+curl -i -X GET \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    https://downloads.php.net/api/list-builds
+```
+
+---
+
 ### POST /api/php
 
 - Auth: Required
