@@ -28,7 +28,7 @@
 ### GET /api/list-builds
 
 - Auth: Required
-- Purpose: Enumerate the files under `BUILDS_DIRECTORY` so operators can inspect available build artifacts.
+- Purpose: List builds artifacts pending for processing in the `BUILDS_DIRECTORY`.
 - Request body: none (GET request).
 - Success: `200 OK` with JSON payload `{ "builds": [ { "path": "relative/path", "size": 1234, "modified": "2025-09-30T12:34:56+00:00" }, ... ] }`.
 - Errors:
@@ -41,6 +41,34 @@ Example
 curl -i -X GET \
     -H "Authorization: Bearer $AUTH_TOKEN" \
     https://downloads.php.net/api/list-builds
+```
+
+---
+
+### POST /api/delete-pending-job
+
+- Auth: Required
+- Purpose: Remove a queued build job before it is processed.
+- Request body (JSON):
+    - `type` (string, required): One of `php`, `pecl`, or `winlibs`.
+    - `job` (string, required): The job filename (for `php`/`pecl`) or directory name (for `winlibs`).
+- Success: `200 OK` with `{ "status": "deleted" }`.
+- Errors:
+    - `400` if validation fails (missing/invalid fields).
+    - `404` if the job could not be found.
+    - `500` if `BUILDS_DIRECTORY` is not configured or the delete operation fails.
+
+Example
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+            "type": "php",
+            "job": "php-abc123.zip"
+        }' \
+    https://downloads.php.net/api/delete-pending-job
 ```
 
 ---
