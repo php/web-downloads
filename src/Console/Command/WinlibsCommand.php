@@ -47,7 +47,7 @@ class WinlibsCommand extends Command
                 if ($files) {
                     if($data['type'] === 'php') {
                         $this->copyPhpFiles($files, $data['library'], $data['vs_version_targets']);
-                        $this->updateSeriesFiles(
+                        $this->updatePhpSeriesFiles(
                             $files,
                             $data['library'],
                             $data['php_versions'],
@@ -56,6 +56,7 @@ class WinlibsCommand extends Command
                         );
                     } else {
                         $this->copyPeclFiles($files, $data['library']);
+                        $this->updatePackagesFile($files, $data['library']);
                     }
                 }
 
@@ -124,7 +125,7 @@ class WinlibsCommand extends Command
         }
     }
 
-    private function updateSeriesFiles(
+    private function updatePhpSeriesFiles(
         array  $files,
         string $library,
         string $php_versions,
@@ -168,6 +169,47 @@ class WinlibsCommand extends Command
                     }
                 }
             }
+        }
+    }
+
+    private function updatePackagesFile(array $files, string $library): void
+    {
+        $baseDirectory = $this->baseDirectory . "/pecl/deps";
+        $packagesFile = $baseDirectory . "/packages.txt";
+        $syncFile = $packagesFile . '.sync';
+
+        if (!is_dir($baseDirectory)) {
+            mkdir($baseDirectory, 0755, true);
+        }
+
+        $file_lines = [];
+        if (file_exists($packagesFile)) {
+            $file_lines = file($packagesFile, FILE_IGNORE_NEW_LINES);
+        }
+
+        if(!file_exists($syncFile)) {
+            $file_lines = array_map(function($file) {
+                return basename($file);
+            }, glob($baseDirectory . '/*.zip'));
+        } else {
+            foreach ($files as $file) {
+                $fileName = str_replace($file['artifact_name'], $library, $file['file_name']);
+                $found = false;
+                foreach ($file_lines as $no => $line) {
+                    if (str_starts_with($line, $library)) {
+                        $file_lines[$no] = $fileName;
+                        $found = true;
+                    }
+                }
+                if (!$found) {
+                    $file_lines[] = $fileName;
+                }
+            }
+        }
+        sort($file_lines);
+        file_put_contents($packagesFile, implode("\n", $file_lines));
+        if(!file_exists($syncFile)) {
+            touch($syncFile);
         }
     }
 }

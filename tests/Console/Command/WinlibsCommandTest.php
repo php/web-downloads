@@ -182,6 +182,53 @@ class WinlibsCommandTest extends TestCase
         $this->assertFileExists($this->baseDirectory . "/pecl/deps/$library-$ref-$vsVersion-$arch.zip");
     }
 
+    public function testPackagesFileIsGeneratedWithoutSyncFile(): void
+    {
+        $result = $this->runPeclWinlibsCommand('redis', 'phpredis', '5.3.7', 'vs16', 'x64');
+
+        $this->assertEquals(0, $result, 'Command should return success.');
+
+        $packagesFile = $this->baseDirectory . '/pecl/deps/packages.txt';
+        $syncFile = $packagesFile . '.sync';
+
+        $this->assertFileExists($packagesFile);
+        $this->assertFileExists($syncFile);
+        $this->assertSame(
+            ['phpredis-5.3.7-vs16-x64.zip'],
+            file($packagesFile, FILE_IGNORE_NEW_LINES)
+        );
+    }
+
+    public function testPackagesFileUpdatesExistingEntriesAndMaintainsSorting(): void
+    {
+        $this->runPeclWinlibsCommand('redis', 'phpredis', '5.3.7', 'vs16', 'x64');
+
+        $packagesFile = $this->baseDirectory . '/pecl/deps/packages.txt';
+        $this->assertFileExists($packagesFile);
+        $this->assertSame(
+            ['phpredis-5.3.7-vs16-x64.zip'],
+            file($packagesFile, FILE_IGNORE_NEW_LINES)
+        );
+
+        $this->runPeclWinlibsCommand('imagick', 'imagick', '3.7.0', 'vs16', 'x64');
+        $this->assertSame(
+            [
+                'imagick-3.7.0-vs16-x64.zip',
+                'phpredis-5.3.7-vs16-x64.zip',
+            ],
+            file($packagesFile, FILE_IGNORE_NEW_LINES)
+        );
+
+        $this->runPeclWinlibsCommand('redis', 'phpredis', '5.3.8', 'vs16', 'x64');
+        $this->assertSame(
+            [
+                'imagick-3.7.0-vs16-x64.zip',
+                'phpredis-5.3.8-vs16-x64.zip',
+            ],
+            file($packagesFile, FILE_IGNORE_NEW_LINES)
+        );
+    }
+
     public static function versionProvider(): array
     {
         return [
@@ -277,5 +324,33 @@ class WinlibsCommandTest extends TestCase
                 'arch'          => 'x86',
             ]],
         ];
+    }
+
+    private function runPeclWinlibsCommand(string $buildName, string $library, string $ref, string $vsVersion, string $arch): int
+    {
+        $directory = $this->winlibsDirectory . '/' . $buildName;
+        mkdir($directory, 0755, true);
+
+        file_put_contents($directory . '/data.json', json_encode([
+            'type' => 'pecl',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => '8.2',
+            'stability' => 'stable'
+        ]));
+
+        $zipPath = $directory . "/$buildName-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('dummy_file.txt', 'dummy content');
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        return $command->handle();
     }
 }
