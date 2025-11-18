@@ -14,6 +14,7 @@ class WinlibsController extends BaseController
         $validator = new Validator([
             'library' => 'required|string',
             'ref' => 'required|string',
+            'type' => 'required|string|regex:/^(php|pecl)$/',
             'workflow_run_id' => 'required|string',
             'php_versions' => 'required|string|regex:/^(?:\d+\.\d+|master)(?:,\s*(?:\d+\.\d+|master))*$/',
             'vs_version_targets' => 'required|string|regex:/^(v[c|s]\d{2})(,v[c|s]\d{2})*$/',

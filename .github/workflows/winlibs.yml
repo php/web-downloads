@@ -9,6 +9,10 @@ on:
       ref:
         description: 'Library Ref'
         required: true
+      type:
+        description: 'Library Type (php or pecl)'
+        required: true
+        default: 'php'
       workflow_run_id:
         description: 'Workflow Run ID'
         required: true
@@ -32,4 +36,4 @@ jobs:
           --request POST \
           --location https://downloads.php.net/api/winlibs \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
-          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version": "${{ inputs.vs_version }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}" }'
+          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "type": "${{ inputs.type }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version": "${{ inputs.vs_version }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}" }'

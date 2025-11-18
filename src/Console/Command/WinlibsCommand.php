@@ -45,14 +45,18 @@ class WinlibsCommand extends Command
                 $files = glob($directoryPath . '/*.zip');
                 $files = $this->parseFiles($files);
                 if ($files) {
-                    $this->copyFiles($files, $data['library'], $data['vs_version_targets']);
-                    $this->updateSeriesFiles(
-                        $files,
-                        $data['library'],
-                        $data['php_versions'],
-                        $data['vs_version_targets'],
-                        $data['stability']
-                    );
+                    if($data['type'] === 'php') {
+                        $this->copyPhpFiles($files, $data['library'], $data['vs_version_targets']);
+                        $this->updateSeriesFiles(
+                            $files,
+                            $data['library'],
+                            $data['php_versions'],
+                            $data['vs_version_targets'],
+                            $data['stability']
+                        );
+                    } else {
+                        $this->copyPeclFiles($files, $data['library']);
+                    }
                 }
 
                 (new Helpers)->rmdirr($directoryPath);
@@ -85,7 +89,7 @@ class WinlibsCommand extends Command
         return $data;
     }
 
-    private function copyFiles(array $files, string $library, string $vs_version_targets): void
+    private function copyPhpFiles(array $files, string $library, string $vs_version_targets): void
     {
         $baseDirectory = $this->baseDirectory . "/php-sdk/deps";
         if (!is_dir($baseDirectory)) {
@@ -101,6 +105,22 @@ class WinlibsCommand extends Command
                 $destinationFileName = str_replace($file['artifact_name'], $library, $file['file_name']);
                 copy($file['file_path'], $destinationDirectory . '/' . $destinationFileName);
             }
+        }
+    }
+
+    private function copyPeclFiles(array $files, string $library): void
+    {
+        $baseDirectory = $this->baseDirectory . "/pecl/deps";
+        if (!is_dir($baseDirectory)) {
+            mkdir($baseDirectory, 0755, true);
+        }
+        foreach ($files as $file) {
+            $destinationDirectory = $baseDirectory;
+            if (!is_dir($destinationDirectory)) {
+                mkdir($destinationDirectory, 0755, true);
+            }
+            $destinationFileName = str_replace($file['artifact_name'], $library, $file['file_name']);
+            copy($file['file_path'], $destinationDirectory . '/' . $destinationFileName);
         }
     }
 

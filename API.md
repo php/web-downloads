@@ -138,6 +138,7 @@ curl -i -X POST \
 - Request body (JSON):
     - `library` (string, required)
     - `ref` (string, required)
+    - `type` (string, required): `php`, or `pecl`.
     - `workflow_run_id` (string, required)
     - `php_versions` (string, required): Comma-separated list matching `^(?:\d+\.\d+|master)(?:,\s*(?:\d+\.\d+|master))*$`.
     - `vs_version_targets` (string, required): Comma-separated list matching `^(v[c|s]\d{2})(,v[c|s]\d{2})*$`.

@@ -15,6 +15,8 @@ class WinlibsCommandTest extends TestCase
     
     private string $winlibsDirectory;
 
+    private string $buildsDirectory;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,6 +44,7 @@ class WinlibsCommandTest extends TestCase
         $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
 
         file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'type' => 'php',
             'library' => $library,
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
@@ -77,6 +80,7 @@ class WinlibsCommandTest extends TestCase
         $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
 
         file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'type' => 'php',
             'library' => $library,
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
@@ -114,6 +118,7 @@ class WinlibsCommandTest extends TestCase
         $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
 
         file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'type' => 'php',
             'library' => $library,
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
@@ -139,6 +144,42 @@ class WinlibsCommandTest extends TestCase
         $this->assertEquals(0, $result, "Command should return success.");
         $this->assertStringContainsString("lib-$ref-$vsVersion-$arch.zip", file_get_contents($seriesFilePath), "Series file should be updated correctly.");
         $this->assertStringNotContainsString("lib-1.0.0-$vsVersion-$arch.zip", file_get_contents($seriesFilePath), "Series file should be updated correctly.");
+    }
+
+    public function testSuccessfulPeclFileOperations(): void
+    {
+        mkdir($this->winlibsDirectory . '/redis', 0755, true);
+        mkdir($this->baseDirectory . '/pecl/deps', 0755, true);
+
+        $library = 'phpredis';
+        $ref = '5.3.7';
+        $vsVersion = 'vs16';
+        $arch = 'x64';
+
+        file_put_contents($this->winlibsDirectory . '/redis/data.json', json_encode([
+            'type' => 'pecl',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => '8.2',
+            'stability' => 'stable'
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/redis/redis-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('dummy_file.txt', 'dummy content');
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertEquals(0, $result, 'Command should return success.');
+        $this->assertFileExists($this->baseDirectory . "/pecl/deps/$library-$ref-$vsVersion-$arch.zip");
     }
 
     public static function versionProvider(): array
