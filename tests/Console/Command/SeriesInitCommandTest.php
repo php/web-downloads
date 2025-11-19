@@ -38,15 +38,18 @@ class SeriesInitCommandTest extends TestCase
         ];
     }
 
-    public function testReturnsSuccessWhenNoSeriesDir(): void
+    public function testFailsWhenNoSeriesDir(): void
     {
         $command = new SeriesInitCommand();
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
 
+        ob_start();
         $result = $command->handle();
+        $output = trim(ob_get_clean());
 
-        $this->assertSame(0, $result, 'Should return success when there is no builds/series directory.');
+        $this->assertSame(1, $result, 'Should fail when there is no builds/series directory.');
+        $this->assertSame('Series directory does not exist', $output);
     }
 
     public function testMissingBaseDirectory(): void

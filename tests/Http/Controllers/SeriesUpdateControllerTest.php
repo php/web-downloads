@@ -75,14 +75,14 @@ class SeriesUpdateControllerTest extends TestCase
         $this->assertSame($payload, $taskData);
     }
 
-    public function testRejectsInvalidPackageName(): void
+    public function testRejectsInvalidLibraryName(): void
     {
         $payload = [
             'php_version' => '8.0',
             'vs_version' => 'vs16',
             'stability' => 'stable',
-            'library' => 'openssl',
-            // ref missing entirely
+            'library' => 'open ssl',
+            'ref' => '1.2.3',
         ];
 
         $inputPath = $this->createInputFile($payload);
@@ -93,7 +93,29 @@ class SeriesUpdateControllerTest extends TestCase
         $output = ob_get_clean();
         unlink($inputPath);
 
-        $this->assertStringContainsString('The ref field must be a string.', $output);
+        $this->assertStringContainsString('The library field must match the pattern /^[a-zA-Z0-9_-]+$/.', $output);
+        $this->assertEmpty(glob($this->buildsDirectory . '/series/series-update-*.json'));
+    }
+
+    public function testRejectsInvalidRefFormat(): void
+    {
+        $payload = [
+            'php_version' => '8.0',
+            'vs_version' => 'vs16',
+            'stability' => 'stable',
+            'library' => 'openssl',
+            'ref' => 'v1/2',
+        ];
+
+        $inputPath = $this->createInputFile($payload);
+        $controller = new SeriesUpdateController($inputPath);
+
+        ob_start();
+        $controller->handle();
+        $output = ob_get_clean();
+        unlink($inputPath);
+
+        $this->assertStringContainsString('The ref field must match the pattern /^([a-zA-Z0-9\.-]+)?$/.', $output);
         $this->assertEmpty(glob($this->buildsDirectory . '/series/series-update-*.json'));
     }
 

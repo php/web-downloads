@@ -55,15 +55,18 @@ class SeriesUpdateCommandTest extends TestCase
         $this->assertSame('Build directory is required', $output);
     }
 
-    public function testReturnsSuccessWhenNoSeriesDirectory(): void
+    public function testFailsWhenNoSeriesDirectory(): void
     {
         $command = new SeriesUpdateCommand();
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
 
+        ob_start();
         $result = $command->handle();
+        $output = trim(ob_get_clean());
 
-        $this->assertSame(0, $result);
+        $this->assertSame(1, $result);
+        $this->assertSame('Series directory does not exist', $output);
     }
 
     public function testUpdatesExistingLibraryEntry(): void

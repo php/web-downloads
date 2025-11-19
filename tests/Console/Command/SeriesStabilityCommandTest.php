@@ -38,15 +38,18 @@ class SeriesStabilityCommandTest extends TestCase
         ];
     }
 
-    public function testReturnsSuccessWhenNoSeriesDir(): void
+    public function testFailsWhenNoSeriesDir(): void
     {
         $command = new SeriesStabilityCommand();
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
 
+        ob_start();
         $result = $command->handle();
+        $output = trim(ob_get_clean());
 
-        $this->assertSame(0, $result);
+        $this->assertSame(1, $result);
+        $this->assertSame('Series directory does not exist', $output);
     }
 
     public function testMissingBaseDirectory(): void
