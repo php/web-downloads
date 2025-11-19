@@ -28,7 +28,7 @@ class SeriesUpdateCommand extends Command
 
             $seriesDirectory = $buildsDirectory . '/series';
             if (!is_dir($seriesDirectory)) {
-                return Command::SUCCESS;
+                throw new Exception('Series directory does not exist');
             }
 
             $tasks = glob($seriesDirectory . '/series-update-*.json');

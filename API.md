@@ -136,7 +136,7 @@ curl -i -X POST \
 - Auth: Required
 - Purpose: Record metadata and fetch all artifacts for a specific GitHub Actions workflow run of [`winlibs/winlib-builder`](https://github.com/winlibs/winlib-builder).
 - Request body (JSON):
-    - `library` (string, required)
+    - `library` (string, required): matching `^[a-zA-Z0-9_-]+$`
     - `ref` (string, required)
     - `type` (string, required): `php`, or `pecl`.
     - `workflow_run_id` (string, required)
@@ -224,13 +224,13 @@ curl -i -X POST \
 ### POST /api/series-update
 
 - Auth: Required
-- Purpose: Queue an update to a library entry in a series packages file, or remove it entirely.
+- Purpose: Update a library entry in a series packages file, or remove it entirely.
 - Request body (JSON):
     - `php_version` (string, required): Matches `^(\d+\.\d+|master)$`.
     - `vs_version` (string, required): Matches `^v[c|s]\d{2}$`.
     - `stability` (string, required): Either `stable` or `staging`.
     - `library` (string, required): Library identifier to update/remove.
-    - `ref` (string, required but may be empty): When non-empty, updates/creates entries named `<library>-<ref>-<vs_version>-<arch>.zip` for both `x86` and `x64`; when empty, removes the library from both files if present.
+    - `ref` (string, required but may be empty): Matches `^([a-zA-Z0-9\.-]+)?$`, When non-empty, updates/creates entries named `<library>-<ref>-<vs_version>-<arch>.zip` for both `x86` and `x64`; when empty, removes the library from both files if present.
 - Success: `200 OK`, empty body.
 - Errors:
     - `400` with validation details if the payload is invalid.

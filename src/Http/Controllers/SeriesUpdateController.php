@@ -14,8 +14,8 @@ class SeriesUpdateController extends BaseController
             'php_version' => 'required|string|regex:/^(?:\d+\.\d+|master)$/',
             'vs_version' => 'required|string|regex:/^v[c|s]\d{2}$/',
             'stability' => 'required|string|regex:/^(stable|staging)$/',
-            'library' => 'required|string',
-            'ref' => 'string',
+            'library' => 'required|string|regex:/^[a-zA-Z0-9_-]+$/',
+            'ref' => 'string|regex:/^([a-zA-Z0-9\.-]+)?$/',
         ]);
 
         $validator->validate($data);

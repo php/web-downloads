@@ -28,7 +28,7 @@ class SeriesInitCommand extends Command
 
             $series_directory = $buildsDirectory . '/series';
             if(!is_dir($series_directory)) {
-                return Command::SUCCESS;
+                throw new Exception('Series directory does not exist');
             }
 
             $files = glob($series_directory . '/series-init-*.json');

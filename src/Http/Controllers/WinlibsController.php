@@ -12,8 +12,8 @@ class WinlibsController extends BaseController
     protected function validate(array $data): bool
     {
         $validator = new Validator([
-            'library' => 'required|string',
-            'ref' => 'required|string',
+            'library' => 'required|string|regex:/^[a-zA-Z0-9_-]+$/',
+            'ref' => 'required|string|regex:/^[a-zA-Z0-9\.-]+$/',
             'type' => 'required|string|regex:/^(php|pecl)$/',
             'workflow_run_id' => 'required|string',
             'php_versions' => 'required|string|regex:/^(?:\d+\.\d+|master)(?:,\s*(?:\d+\.\d+|master))*$/',
