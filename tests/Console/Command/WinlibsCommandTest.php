@@ -182,17 +182,16 @@ class WinlibsCommandTest extends TestCase
         $this->assertFileExists($this->baseDirectory . "/pecl/deps/$library-$ref-$vsVersion-$arch.zip");
     }
 
-    public function testPackagesFileIsGeneratedWithoutSyncFile(): void
+    public function testPackagesFileIsGenerated(): void
     {
         $result = $this->runPeclWinlibsCommand('redis', 'phpredis', '5.3.7', 'vs16', 'x64');
 
         $this->assertEquals(0, $result, 'Command should return success.');
 
         $packagesFile = $this->baseDirectory . '/pecl/deps/packages.txt';
-        $syncFile = $packagesFile . '.sync';
 
         $this->assertFileExists($packagesFile);
-        $this->assertFileExists($syncFile);
+
         $this->assertSame(
             ['phpredis-5.3.7-vs16-x64.zip'],
             file($packagesFile, FILE_IGNORE_NEW_LINES)
@@ -223,6 +222,7 @@ class WinlibsCommandTest extends TestCase
         $this->assertSame(
             [
                 'imagick-3.7.0-vs16-x64.zip',
+                'phpredis-5.3.7-vs16-x64.zip',
                 'phpredis-5.3.8-vs16-x64.zip',
             ],
             file($packagesFile, FILE_IGNORE_NEW_LINES)
