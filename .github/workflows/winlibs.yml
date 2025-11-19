@@ -26,6 +26,22 @@ on:
         description: 'Stability'
         required: true
 jobs:
+  print-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: job summary
+        run: |
+          echo "### inputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Name | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| ---- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| library | ${{ inputs.library }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ref | ${{ inputs.ref }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| type | ${{ inputs.type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| workflow_run_id | ${{ inputs.workflow_run_id }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| php_versions | ${{ inputs.php_versions }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| vs_version_targets | ${{ inputs.vs_version_targets }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| stability | ${{ inputs.stability }} |" >> $GITHUB_STEP_SUMMARY
   test:
     runs-on: ubuntu-latest
     environment: downloads.php.net
