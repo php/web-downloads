@@ -9,6 +9,7 @@ use App\Http\Controllers\PhpController;
 use App\Http\Controllers\SeriesDeleteController;
 use App\Http\Controllers\SeriesInitController;
 use App\Http\Controllers\SeriesStabilityController;
+use App\Http\Controllers\SeriesUpdateController;
 use App\Http\Controllers\WinlibsController;
 use App\Router;
 
@@ -21,5 +22,6 @@ $router->registerRoute('/api/winlibs', 'POST', WinlibsController::class, true);
 $router->registerRoute('/api/php', 'POST', PhpController::class, true);
 $router->registerRoute('/api/series-init', 'POST', SeriesInitController::class, true);
 $router->registerRoute('/api/series-delete', 'POST', SeriesDeleteController::class, true);
+$router->registerRoute('/api/series-update', 'POST', SeriesUpdateController::class, true);
 $router->registerRoute('/api/series-stability', 'POST', SeriesStabilityController::class, true);
 $router->handleRequest();

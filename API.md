@@ -221,6 +221,57 @@ curl -i -X POST \
 
 ---
 
+### POST /api/series-update
+
+- Auth: Required
+- Purpose: Queue an update to a library entry in a series packages file, or remove it entirely.
+- Request body (JSON):
+    - `php_version` (string, required): Matches `^(\d+\.\d+|master)$`.
+    - `vs_version` (string, required): Matches `^v[c|s]\d{2}$`.
+    - `stability` (string, required): Either `stable` or `staging`.
+    - `library` (string, required): Library identifier to update/remove.
+    - `ref` (string, required but may be empty): When non-empty, updates/creates entries named `<library>-<ref>-<vs_version>-<arch>.zip` for both `x86` and `x64`; when empty, removes the library from both files if present.
+- Success: `200 OK`, empty body.
+- Errors:
+    - `400` with validation details if the payload is invalid.
+    - `500` if `BUILDS_DIRECTORY` is not configured on the server.
+
+Example (update)
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+            "php_version": "8.2",
+            "vs_version": "vs16",
+            "arch": "x64",
+            "stability": "stable",
+            "library": "libxml2",
+            "ref": "2.9.15"
+        }' \
+    https://downloads.php.net/api/series-update
+```
+
+Example (remove)
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+            "php_version": "8.2",
+            "vs_version": "vs16",
+            "arch": "x64",
+            "stability": "stable",
+            "library": "libxml2",
+            "ref": ""
+        }' \
+    https://downloads.php.net/api/series-update
+```
+
+---
+
 ### POST /api/series-stability
 
 - Auth: Required
