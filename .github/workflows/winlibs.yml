@@ -11,8 +11,11 @@ on:
         required: true
       type:
         description: 'Library Type (php or pecl)'
+        type: choice
         required: true
-        default: 'php'
+        options:
+          - php
+          - pecl
       workflow_run_id:
         description: 'Workflow Run ID'
         required: true
