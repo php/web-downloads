@@ -136,6 +136,15 @@ class SeriesUpdateCommandTest extends TestCase
             'libzip-1.9.1-vs17-x64.zip',
         ]));
 
+        $depsX86 = $this->baseDirectory . '/php-sdk/deps/vs17/x86';
+        $depsX64 = $this->baseDirectory . '/php-sdk/deps/vs17/x64';
+        mkdir($depsX86, 0755, true);
+        mkdir($depsX64, 0755, true);
+        file_put_contents($depsX86 . '/libzip-1.9.1.zip', 'x86 artifact');
+        file_put_contents($depsX64 . '/libzip-1.9.1.zip', 'x64 artifact');
+        file_put_contents($depsX86 . '/curl-7.88.0.zip', 'keep x86');
+        file_put_contents($depsX64 . '/curl-7.88.0.zip', 'keep x64');
+
         $this->createTask([
             'php_version' => '8.1',
             'vs_version' => 'vs17',
@@ -157,6 +166,11 @@ class SeriesUpdateCommandTest extends TestCase
 
         $x64Lines = file($filePathX64, FILE_IGNORE_NEW_LINES);
         $this->assertSame(['curl-7.88.0-vs17-x64.zip'], $x64Lines);
+
+        $this->assertFileDoesNotExist($depsX86 . '/libzip-1.9.1.zip');
+        $this->assertFileDoesNotExist($depsX64 . '/libzip-1.9.1.zip');
+        $this->assertFileExists($depsX86 . '/curl-7.88.0.zip');
+        $this->assertFileExists($depsX64 . '/curl-7.88.0.zip');
     }
 
     public function testCreatesSeriesFileWhenMissing(): void

@@ -131,12 +131,34 @@ class SeriesUpdateCommand extends Command
                 if (file_exists($filePath)) {
                     unlink($filePath);
                 }
+                if ($package === null) {
+                    $this->deleteLibraryArtifacts($vsVersion, $arch, $library);
+                }
                 continue;
             }
 
             $tmpFile = $filePath . '.tmp';
             file_put_contents($tmpFile, implode("\n", $lines), LOCK_EX);
             rename($tmpFile, $filePath);
+
+            if ($package === null) {
+                $this->deleteLibraryArtifacts($vsVersion, $arch, $library);
+            }
+        }
+    }
+
+    private function deleteLibraryArtifacts(string $vsVersion, string $arch, string $library): void
+    {
+        $artifactDir = $this->baseDirectory . '/php-sdk/deps/' . $vsVersion . '/' . $arch;
+        if (!is_dir($artifactDir)) {
+            return;
+        }
+
+        $pattern = $artifactDir . '/' . $library . '-*';
+        foreach (glob($pattern) as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
         }
     }
 }
