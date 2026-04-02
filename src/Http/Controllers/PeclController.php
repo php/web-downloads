@@ -52,7 +52,7 @@ class PeclController extends BaseController
     protected function fetchExtension(string $extension, string $ref, string $url, #[\SensitiveParameter] string $token): void
     {
         $directory = getenv('BUILDS_DIRECTORY') . "/pecl";
-        $filepath = $directory . "/$extension-$ref-" . hash('sha256', $url) . time() . ".zip";
+        $filepath = $directory . "/$extension-$ref-" . hash('sha256', $url) . uniqid('', true) . ".zip";
 
         if(!is_dir($directory)) {
             umask(0);

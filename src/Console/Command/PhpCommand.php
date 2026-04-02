@@ -56,7 +56,7 @@ class PhpCommand extends Command
             }
 
             foreach ($filteredFiles as $filepath) {
-                $hash = hash('sha256', $filepath) . time();
+                $hash = hash('sha256', $filepath) . uniqid('', true);
                 $tempDirectory = "/tmp/php-" . $hash;
 
                 if (is_dir($tempDirectory)) {

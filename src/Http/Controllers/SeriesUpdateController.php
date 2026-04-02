@@ -51,7 +51,7 @@ class SeriesUpdateController extends BaseController
             'ref' => $data['ref'],
         ];
 
-        $hash = hash('sha256', $data['php_version'] . $data['vs_version'] . $data['library']) . microtime(true);
+        $hash = hash('sha256', $data['php_version'] . $data['vs_version'] . $data['library']) . uniqid('', true);
         $file = $seriesDirectory . '/series-update-' . $hash . '.json';
 
         file_put_contents($file, json_encode($payload));

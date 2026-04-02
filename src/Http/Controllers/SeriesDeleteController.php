@@ -30,7 +30,7 @@ class SeriesDeleteController extends BaseController
     protected function execute(array $data): void
     {
         $directory = getenv('BUILDS_DIRECTORY') . '/series';
-        $hash = hash('sha256', $data['php_version']) . time();
+        $hash = hash('sha256', $data['php_version']) . uniqid('', true);
         $file = $directory . '/series-delete-' . $hash . '.json';
         file_put_contents($file, json_encode($data));
     }
