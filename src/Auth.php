@@ -10,6 +10,6 @@ class Auth
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         $authToken = str_replace('Bearer ', '', $authHeader);
 
-        return $authToken === getenv('AUTH_TOKEN');
+        return hash_equals((string) getenv('AUTH_TOKEN'), $authToken);
     }
 }
