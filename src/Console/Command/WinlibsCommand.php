@@ -116,12 +116,8 @@ class WinlibsCommand extends Command
             mkdir($baseDirectory, 0755, true);
         }
         foreach ($files as $file) {
-            $destinationDirectory = $baseDirectory;
-            if (!is_dir($destinationDirectory)) {
-                mkdir($destinationDirectory, 0755, true);
-            }
             $destinationFileName = str_replace($file['artifact_name'], $library, $file['file_name']);
-            copy($file['file_path'], $destinationDirectory . '/' . $destinationFileName);
+            copy($file['file_path'], $baseDirectory . '/' . $destinationFileName);
         }
     }
 
