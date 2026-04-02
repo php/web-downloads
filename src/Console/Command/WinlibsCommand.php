@@ -77,7 +77,9 @@ class WinlibsCommand extends Command
         foreach ($files as $file) {
             $fileName = basename($file);
             $pattern = '/^(?P<artifact>.+?)-(?P<version>\d.*)-(?P<vs>v[c|s]\d+)-(?P<arch>[^.]+)\.zip$/';
-            preg_match($pattern, $fileName, $matches);
+            if (!preg_match($pattern, $fileName, $matches)) {
+                continue;
+            }
             $data[] = [
                 'file_path'     => $file,
                 'file_name'     => $fileName,

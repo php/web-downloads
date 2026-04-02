@@ -272,6 +272,13 @@ class WinlibsCommandTest extends TestCase
         $this->assertEquals($expected, $result[0]);
     }
 
+    public function testParseFilesSkipsNonMatchingFiles(): void
+    {
+        $command = new WinlibsCommand();
+        $result = $command->parseFiles(['/tmp/not-a-valid-file.txt']);
+        $this->assertEmpty($result);
+    }
+
     public static function fileProvider(): array
     {
         return [
