@@ -21,7 +21,7 @@ class DeletePendingJobControllerTest extends TestCase
 
     protected function tearDown(): void
     {
-        (new Helpers())->rmdirr($this->tempDir);
+        Helpers::rmdirr($this->tempDir);
         parent::tearDown();
     }
 

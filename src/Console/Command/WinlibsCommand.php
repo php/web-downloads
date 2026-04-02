@@ -60,7 +60,7 @@ class WinlibsCommand extends Command
                     }
                 }
 
-                (new Helpers)->rmdirr($directoryPath);
+                Helpers::rmdirr($directoryPath);
 
                 unlink($directoryPath . '.lock');
             }

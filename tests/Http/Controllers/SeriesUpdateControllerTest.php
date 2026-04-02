@@ -25,7 +25,7 @@ class SeriesUpdateControllerTest extends TestCase
     protected function tearDown(): void
     {
         putenv($this->originalBuildsDirectory === null ? 'BUILDS_DIRECTORY' : 'BUILDS_DIRECTORY=' . $this->originalBuildsDirectory);
-        (new Helpers)->rmdirr($this->buildsDirectory);
+        Helpers::rmdirr($this->buildsDirectory);
         parent::tearDown();
     }
 

@@ -30,8 +30,8 @@ class WinlibsCommandTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        (new Helpers)->rmdirr($this->baseDirectory);
-        (new Helpers)->rmdirr($this->buildsDirectory);
+        Helpers::rmdirr($this->baseDirectory);
+        Helpers::rmdirr($this->buildsDirectory);
     }
 
     #[DataProvider('versionProvider')]

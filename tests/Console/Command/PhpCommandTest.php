@@ -33,8 +33,8 @@ class PhpCommandTest extends TestCase
     {
         parent::tearDown();
         // Clean up directories
-        (new Helpers)->rmdirr($this->baseDirectory);
-        (new Helpers)->rmdirr($this->buildsDirectory);
+        Helpers::rmdirr($this->baseDirectory);
+        Helpers::rmdirr($this->buildsDirectory);
     }
 
     public static function buildsProvider(): array

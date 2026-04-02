@@ -36,7 +36,7 @@ class GetArtifacts
             $artifacts = json_decode($response, true);
             $workflowRunDirectory = getenv('BUILDS_DIRECTORY') . "/winlibs/" . $workflow_run_id;
             if (is_dir($workflowRunDirectory)) {
-                (new Helpers)->rmdirr($workflowRunDirectory);
+                Helpers::rmdirr($workflowRunDirectory);
             }
             umask(0);
             mkdir($workflowRunDirectory, 0777, true);

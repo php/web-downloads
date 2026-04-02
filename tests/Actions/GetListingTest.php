@@ -25,7 +25,7 @@ class GetListingTest extends TestCase
 
     protected function tearDown(): void
     {
-        (new Helpers())->rmdirr($this->tempDir);
+        Helpers::rmdirr($this->tempDir);
     }
 
     public static function bytes2StringProvider(): array

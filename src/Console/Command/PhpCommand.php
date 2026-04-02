@@ -60,7 +60,7 @@ class PhpCommand extends Command
                 $tempDirectory = "/tmp/php-" . $hash;
 
                 if (is_dir($tempDirectory)) {
-                    (new Helpers)->rmdirr($tempDirectory);
+                    Helpers::rmdirr($tempDirectory);
                 }
                 mkdir($tempDirectory, 0755, true);
 
@@ -87,7 +87,7 @@ class PhpCommand extends Command
                     $this->updateLatestBuilds($releases, $destinationDirectory);
                 }
 
-                (new Helpers)->rmdirr($tempDirectory);
+                Helpers::rmdirr($tempDirectory);
 
                 unlink($filepath . '.lock');
             }
@@ -97,7 +97,7 @@ class PhpCommand extends Command
             $tempDirectories = glob('/tmp/php-*');
             if($tempDirectories) {
                 foreach ($tempDirectories as $tempDirectory) {
-                    (new Helpers)->rmdirr($tempDirectory);
+                    Helpers::rmdirr($tempDirectory);
                 }
             }
             return Command::FAILURE;
@@ -132,7 +132,7 @@ class PhpCommand extends Command
                 $destination = $destinationDirectory . '/' . $fileName;
                 rename($file, $destination);
             }
-            (new Helpers)->rmdirr($tempDirectory);
+            Helpers::rmdirr($tempDirectory);
             $this->copyBuildsToArchive($destinationDirectory, $version);
         } else {
             throw new Exception('No builds found in the artifact');

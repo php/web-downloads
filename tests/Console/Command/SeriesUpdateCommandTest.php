@@ -24,8 +24,8 @@ class SeriesUpdateCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        (new Helpers)->rmdirr($this->baseDirectory);
-        (new Helpers)->rmdirr($this->buildsDirectory);
+        Helpers::rmdirr($this->baseDirectory);
+        Helpers::rmdirr($this->buildsDirectory);
         parent::tearDown();
     }
 

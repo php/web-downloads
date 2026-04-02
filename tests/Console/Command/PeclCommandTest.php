@@ -35,8 +35,8 @@ class PeclCommandTest extends TestCase
     {
         parent::tearDown();
 
-        (new Helpers)->rmdirr($this->baseDirectory);
-        (new Helpers)->rmdirr($this->buildsDirectory);
+        Helpers::rmdirr($this->baseDirectory);
+        Helpers::rmdirr($this->buildsDirectory);
     }
 
     public function testPeclAddSuccessfullyExtractsZip(): void
@@ -64,7 +64,7 @@ class PeclCommandTest extends TestCase
         $this->assertEquals('Base directory is required', $output);
         $this->assertEquals(1, $result);
 
-        (new Helpers)->rmdirr($this->buildsDirectory . '/pecl');
+        Helpers::rmdirr($this->buildsDirectory . '/pecl');
         $command->setOption('base-directory', $this->baseDirectory);
         $command->setOption('builds-directory', $this->buildsDirectory);
         $result = $command->handle();

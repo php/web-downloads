@@ -21,15 +21,13 @@ class HelpersTest extends TestCase
         parent::tearDown();
         // Ensure all files and directories are cleaned up after each test
         if (file_exists($this->testDir)) {
-            $helper = new Helpers();
-            $helper->rmdirr($this->testDir);
+            Helpers::rmdirr($this->testDir);
         }
     }
 
     public function testRemoveNonExistentDirectory(): void
     {
-        $helper = new Helpers();
-        $this->assertFalse($helper->rmdirr($this->testDir . '/nonexistent'));
+        $this->assertFalse(Helpers::rmdirr($this->testDir . '/nonexistent'));
     }
 
     public function testRemoveDirectoryWithFiles(): void
@@ -37,8 +35,7 @@ class HelpersTest extends TestCase
         mkdir($this->testDir, 0777, true);
         file_put_contents($this->testDir . '/file.txt', 'Hello World');
 
-        $helper = new Helpers();
-        $result = $helper->rmdirr($this->testDir);
+        $result = Helpers::rmdirr($this->testDir);
         $this->assertTrue($result);
         $this->assertDirectoryDoesNotExist($this->testDir);
     }
@@ -48,8 +45,7 @@ class HelpersTest extends TestCase
         mkdir($this->testDir . '/nested', 0777, true);
         file_put_contents($this->testDir . '/nested/file.txt', 'Hello World');
 
-        $helper = new Helpers();
-        $result = $helper->rmdirr($this->testDir);
+        $result = Helpers::rmdirr($this->testDir);
         $this->assertTrue($result);
         $this->assertDirectoryDoesNotExist($this->testDir);
     }

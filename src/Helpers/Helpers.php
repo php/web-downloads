@@ -5,7 +5,7 @@ namespace App\Helpers;
 
 class Helpers
 {
-    public function rmdirr($node): bool
+    public static function rmdirr($node): bool
     {
         if (!file_exists($node)) {
             return false;
@@ -18,7 +18,7 @@ class Helpers
             if ($leaf == '.' || $leaf == '..') {
                 continue;
             }
-            $this->rmdirr($node . DIRECTORY_SEPARATOR . $leaf);
+            self::rmdirr($node . DIRECTORY_SEPARATOR . $leaf);
         }
         $dir->close();
         return rmdir($node);

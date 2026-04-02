@@ -26,7 +26,7 @@ class MockGetArtifacts extends GetArtifacts {
 
         $workflowRunDirectory = getenv('BUILDS_DIRECTORY') . "/winlibs/" . $workflow_run_id;
         if (is_dir($workflowRunDirectory)) {
-            (new Helpers)->rmdirr($workflowRunDirectory);
+            Helpers::rmdirr($workflowRunDirectory);
         }
         mkdir($workflowRunDirectory, 0755, true);
         foreach ($data['artifacts'] as $artifact) {
@@ -59,7 +59,7 @@ class GetArtifactsTest extends TestCase {
     {
         $workflowRunDirectory = getenv('BUILDS_DIRECTORY') . "/winlibs/123456";
         if (is_dir($workflowRunDirectory)) {
-            (new Helpers)->rmdirr($workflowRunDirectory);
+            Helpers::rmdirr($workflowRunDirectory);
         }
     }
 }
