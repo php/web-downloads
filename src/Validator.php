@@ -82,7 +82,7 @@ class Validator
 
     protected function regex($value, $pattern): bool
     {
-        return preg_match($pattern, $value) === 1;
+        return is_string($value) && preg_match($pattern, $value) === 1;
     }
 
     protected function getErrorMessage($field, $rule, $value): string
