@@ -263,6 +263,29 @@ class WinlibsCommandTest extends TestCase
         $this->assertEquals(1, $result);
     }
 
+    public function testHandlesNoValidFilesInJob(): void
+    {
+        mkdir($this->winlibsDirectory . '/lib', 0755, true);
+        file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'type' => 'php',
+            'library' => 'lib',
+            'ref' => '1.0.0',
+            'vs_version_targets' => 'vs16',
+            'php_versions' => '8.2',
+            'stability' => 'stable'
+        ]));
+        file_put_contents($this->winlibsDirectory . '/lib/not-a-valid-file.zip', 'dummy');
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+        ob_start();
+        $result = $command->handle();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('No valid files found', $output);
+        $this->assertEquals(1, $result);
+    }
+
 
     #[DataProvider('fileProvider')]
     public function testParseFiles($file, $expected): void

@@ -44,6 +44,9 @@ class WinlibsCommand extends Command
                 $data = json_decode(file_get_contents($directoryPath . '/data.json'), true, 512, JSON_THROW_ON_ERROR);
                 $files = glob($directoryPath . '/*.zip');
                 $files = $this->parseFiles($files);
+                if (empty($files)) {
+                    throw new Exception('No valid files found in ' . basename($directoryPath));
+                }
                 if ($files) {
                     if($data['type'] === 'php') {
                         $this->copyPhpFiles($files, $data['library'], $data['vs_version_targets']);
