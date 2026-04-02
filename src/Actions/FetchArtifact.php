@@ -23,8 +23,13 @@ class FetchArtifact
             }
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
-        curl_exec($ch);
+        $result = curl_exec($ch);
+        $error = curl_error($ch);
         curl_close($ch);
         fclose($fp);
+        if ($result === false) {
+            unlink($filepath);
+            throw new \RuntimeException('cURL error: ' . $error);
+        }
     }
 }
