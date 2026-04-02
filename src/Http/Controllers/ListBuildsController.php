@@ -36,10 +36,10 @@ class ListBuildsController implements ControllerInterface
     {
         $entries = [];
 
-            $normalizedRoot = rtrim($root, DIRECTORY_SEPARATOR);
+        $normalizedRoot = rtrim($root, DIRECTORY_SEPARATOR);
 
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($normalizedRoot, FilesystemIterator::SKIP_DOTS),
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($normalizedRoot, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::LEAVES_ONLY
         );
 
@@ -48,7 +48,7 @@ class ListBuildsController implements ControllerInterface
                 continue;
             }
 
-                $relativePath = substr($fileInfo->getPathname(), strlen($normalizedRoot) + 1);
+            $relativePath = substr($fileInfo->getPathname(), strlen($normalizedRoot) + 1);
 
             $entries[] = [
                 'path' => $relativePath,
