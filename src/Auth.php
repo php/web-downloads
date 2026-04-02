@@ -7,9 +7,14 @@ class Auth
 {
     public function authenticate(): bool
     {
+        $expectedToken = (string) getenv('AUTH_TOKEN');
+        if ($expectedToken === '') {
+            return false;
+        }
+
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         $authToken = str_replace('Bearer ', '', $authHeader);
 
-        return hash_equals((string) getenv('AUTH_TOKEN'), $authToken);
+        return hash_equals($expectedToken, $authToken);
     }
 }

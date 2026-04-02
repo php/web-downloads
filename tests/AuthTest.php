@@ -25,4 +25,18 @@ class AuthTest extends TestCase {
         $auth = new Auth();
         $this->assertFalse($auth->authenticate(), 'Authentication should fail with no token provided.');
     }
+
+    public function testAuthenticateFailsWhenAuthTokenUnset() {
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+        putenv('AUTH_TOKEN');
+        $auth = new Auth();
+        $this->assertFalse($auth->authenticate(), 'Authentication should fail when AUTH_TOKEN is unset.');
+    }
+
+    public function testAuthenticateFailsWithEmptyAuthTokenAndEmptyHeader() {
+        $_SERVER['HTTP_AUTHORIZATION'] = '';
+        putenv('AUTH_TOKEN');
+        $auth = new Auth();
+        $this->assertFalse($auth->authenticate(), 'Authentication should fail when both AUTH_TOKEN and header are empty.');
+    }
 }
