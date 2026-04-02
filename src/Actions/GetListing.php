@@ -22,7 +22,7 @@ class GetListing
             $parts = $this->parseFileName(basename($file));
             $key = ($parts['nts'] ? 'nts-' : 'ts-') . $parts['vc'] . '-' . $parts['arch'];
             $version_short = $parts['version_short'];
-            if (!isset($releases['version'])) {
+            if (!isset($releases[$version_short]['version'])) {
                 $releases[$version_short]['version'] = $parts['version'];
             }
             $releases[$version_short][$key]['mtime'] = $mtime;
