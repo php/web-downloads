@@ -137,6 +137,13 @@ class WinlibsCommand extends Command
         $php_versions = explode(',', $php_versions);
         $vs_version_targets = explode(',', $vs_version_targets);
         $stability_values = explode(',', $stability);
+        $vsConfig = json_decode(
+            file_get_contents(dirname(__DIR__, 3) . '/config/vs.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
+        $devVersions = $vsConfig['dev'] ?? [];
 
         $baseDirectory = $this->baseDirectory . "/php-sdk/deps/series";
 
@@ -145,8 +152,12 @@ class WinlibsCommand extends Command
         }
 
         foreach ($php_versions as $php_version) {
+            $stabilityValues = $stability_values;
+            if (in_array($php_version, $devVersions, true)) {
+                $stabilityValues = ['stable', 'staging'];
+            }
             foreach ($vs_version_targets as $vs_version_target) {
-                foreach ($stability_values as $stability_value) {
+                foreach ($stabilityValues as $stability_value) {
                     foreach ($files as $file) {
                         $fileName = str_replace($file['artifact_name'], $library, $file['file_name']);
                         $arch = $file['arch'];

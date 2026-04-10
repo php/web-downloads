@@ -238,6 +238,49 @@ class WinlibsCommandTest extends TestCase
         ];
     }
 
+    public function testSyncsStableAndStagingSeriesFilesForConfiguredUpcomingSeries(): void
+    {
+        mkdir($this->winlibsDirectory . '/lib', 0755, true);
+
+        $library = 'lib';
+        $ref = '2.0.0';
+        $phpVersion = 'master';
+        $vsVersion = 'vs17';
+        $arch = 'x64';
+
+        file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
+            'type' => 'php',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => 'staging'
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/lib/lib-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString("dummy_file.txt", "dummy content");
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertStringEqualsFile(
+            $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-stable.txt",
+            "lib-$ref-$vsVersion-$arch.zip"
+        );
+        $this->assertStringEqualsFile(
+            $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-staging.txt",
+            "lib-$ref-$vsVersion-$arch.zip"
+        );
+    }
+
     public function testCommandHandlesMissingBaseDirectory(): void
     {
         $command = new WinlibsCommand();
