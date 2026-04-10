@@ -23,6 +23,18 @@
 - 405 Method Not Allowed: Path exists but HTTP method is not allowed; response lists allowed methods.
 - 500 Internal Server Error: Uncaught errors (e.g., download failure, malformed JSON, or other exceptions).
 
+### Endpoints
+
+- [`GET /api/list-builds`](#get-apilist-builds)
+- [`POST /api/delete-pending-job`](#post-apidelete-pending-job)
+- [`POST /api/php`](#post-apiphp)
+- [`POST /api/pecl`](#post-apipecl)
+- [`POST /api/winlibs`](#post-apiwinlibs)
+- [`POST /api/series-init`](#post-apiseries-init)
+- [`POST /api/series-delete`](#post-apiseries-delete)
+- [`POST /api/series-update`](#post-apiseries-update)
+- [`POST /api/series-stability`](#post-apiseries-stability)
+
 ---
 
 ### GET /api/list-builds
