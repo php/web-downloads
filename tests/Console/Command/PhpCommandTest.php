@@ -23,9 +23,15 @@ class PhpCommandTest extends TestCase
         $this->baseDirectory = sys_get_temp_dir() . '/php_test_base';
         $this->buildsDirectory = sys_get_temp_dir() . '/builds';
 
+        Helpers::rmdirr($this->baseDirectory);
+        Helpers::rmdirr($this->buildsDirectory);
+
         mkdir($this->baseDirectory . '/releases/archives', 0755, true);
         mkdir($this->baseDirectory . '/qa/archives', 0755, true);
         mkdir($this->buildsDirectory . '/php', 0755, true);
+        mkdir($this->baseDirectory . '/php-sdk/deps/series', 0755, true);
+        file_put_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-staging.txt', 'x86-staging');
+        file_put_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-staging.txt', 'x64-staging');
     }
 
     protected function tearDown(): void
@@ -156,5 +162,37 @@ class PhpCommandTest extends TestCase
         $command->handle();
         $tempDirectory = "/tmp/php-*";
         $this->assertEmpty(glob($tempDirectory));
+    }
+
+    public function testStableReleasePromotesSeriesFiles(): void
+    {
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $this->stageBuilds(self::buildsProvider()[0][0], $this->buildsDirectory . '/php/test.zip');
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertFileExists($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-stable.txt');
+        $this->assertFileExists($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt');
+        $this->assertSame('x86-staging', file_get_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-stable.txt'));
+        $this->assertSame('x64-staging', file_get_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt'));
+    }
+
+    public function testQaReleaseDoesNotPromoteSeriesFiles(): void
+    {
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $this->stageBuilds(self::buildsProvider()[1][0], $this->buildsDirectory . '/php/test.zip');
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-stable.txt');
+        $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt');
     }
 }

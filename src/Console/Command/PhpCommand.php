@@ -77,6 +77,7 @@ class PhpCommand extends Command
                 unlink($filepath);
 
                 $destinationDirectory = $this->getDestinationDirectory($tempDirectory);
+                $version = $this->getBuildVersion($tempDirectory);
 
                 $this->moveBuild($tempDirectory, $destinationDirectory);
 
@@ -85,6 +86,8 @@ class PhpCommand extends Command
                 $this->updateReleasesJson->handle($releases, $destinationDirectory);
                 if ($destinationDirectory === $this->baseDirectory . '/releases') {
                     $this->updateLatestBuilds($releases, $destinationDirectory);
+                    $parts = explode('.', $version);
+                    $this->promoteSeriesFiles($parts[0] . '.' . $parts[1]);
                 }
 
                 Helpers::rmdirr($tempDirectory);
@@ -109,14 +112,24 @@ class PhpCommand extends Command
      */
     private function getDestinationDirectory(string $tempDirectory): string
     {
+        $version = $this->getBuildVersion($tempDirectory);
+        return $this->baseDirectory . (preg_match('/^\d+\.\d+\.\d+$/', $version) ? '/releases' : '/qa');
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function getBuildVersion(string $tempDirectory): string
+    {
         $testPackFiles = glob($tempDirectory . '/php-test-pack-*.zip');
         if(empty($testPackFiles)) {
             throw new Exception('No test pack found in the artifact');
         }
         $testPackFile = basename($testPackFiles[0]);
-        $testPackFileName = str_replace('.zip', '', $testPackFile);
-        $version = explode('-', $testPackFileName)[3];
-        return $this->baseDirectory . (preg_match('/^\d+\.\d+\.\d+$/', $version) ? '/releases' : '/qa');
+        if (!preg_match('/^php-test-pack-(.+)\.zip$/', $testPackFile, $matches)) {
+            throw new Exception('No test pack found in the artifact');
+        }
+        return $matches[1];
     }
 
     /**
@@ -168,6 +181,37 @@ class PhpCommand extends Command
         $file = preg_replace($pattern, '', $file);
         $parts = explode('-', $file);
         return str_replace('.zip', '', $parts[0]);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function promoteSeriesFiles(string $phpVersion): void
+    {
+        $vsVersions = json_decode(
+            file_get_contents(dirname(__DIR__, 3) . '/config/vs.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
+        if (!isset($vsVersions[$phpVersion])) {
+            throw new Exception('No VS version found for PHP ' . $phpVersion);
+        }
+        $vsVersion = $vsVersions[$phpVersion];
+
+        $baseDirectory = $this->baseDirectory . "/php-sdk/deps/series";
+
+        if (!is_dir($baseDirectory)) {
+            mkdir($baseDirectory, 0755, true);
+        }
+        foreach(['x86', 'x64'] as $arch) {
+            $sourceFile = $baseDirectory . '/packages-' . $phpVersion . '-' . $vsVersion . '-' . $arch . '-staging.txt';
+            $destinationFile = $baseDirectory . '/packages-' . $phpVersion . '-' . $vsVersion . '-' . $arch . '-stable.txt';
+            if(!file_exists($sourceFile)) {
+                throw new Exception($sourceFile . ' does not exist');
+            }
+            copy($sourceFile, $destinationFile);
+        }
     }
 
     private function updateLatestBuilds($releases, $directory): void
