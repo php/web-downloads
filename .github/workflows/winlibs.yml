@@ -28,6 +28,13 @@ on:
       stability:
         description: 'Stability'
         required: true
+      update_series:
+        description: 'Update php-sdk series files'
+        type: choice
+        required: true
+        options:
+          - 'true'
+          - 'false'
 jobs:
   print-inputs:
     runs-on: ubuntu-latest
@@ -45,6 +52,7 @@ jobs:
           echo "| php_versions | ${{ inputs.php_versions }} |" >> $GITHUB_STEP_SUMMARY
           echo "| vs_version_targets | ${{ inputs.vs_version_targets }} |" >> $GITHUB_STEP_SUMMARY
           echo "| stability | ${{ inputs.stability }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| update_series | ${{ inputs.update_series }} |" >> $GITHUB_STEP_SUMMARY
   test:
     runs-on: ubuntu-latest
     environment: downloads.php.net
@@ -55,4 +63,4 @@ jobs:
           --request POST \
           --location https://downloads.php.net/api/winlibs \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
-          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "type": "${{ inputs.type }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version": "${{ inputs.vs_version }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}" }'
+          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "type": "${{ inputs.type }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}", "update_series": "${{ inputs.update_series }}" }'

@@ -155,6 +155,7 @@ curl -i -X POST \
     - `php_versions` (string, required): Comma-separated list matching `^(?:\d+\.\d+|master)(?:,\s*(?:\d+\.\d+|master))*$`.
     - `vs_version_targets` (string, required): Comma-separated list matching `^(v[c|s]\d{2})(,v[c|s]\d{2})*$`.
     - `stability` (string, required): `stable`, `staging`, or both (comma-separated) matching `^(stable|staging)(,(stable|staging))?$`.
+    - `update_series` (string, required): `true` or `false`.
     - `token` (string, required): GitHub token used to download artifacts.
 - Success: `200 OK`, empty body.
 - Errors:
@@ -170,10 +171,12 @@ curl -i -X POST \
     -d '{
             "library": "icu",
             "ref": "main",
+            "type": "php",
             "workflow_run_id": "1234567890",
             "php_versions": "8.1,8.2,8.3",
             "vs_version_targets": "vc15,vs16",
             "stability": "stable",
+            "update_series": "true",
             "token": "ghp_..."
         }' \
     https://downloads.php.net/api/winlibs

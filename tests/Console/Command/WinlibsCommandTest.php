@@ -49,7 +49,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
             'php_versions' => $phpVersion,
-            'stability' => $stability
+            'stability' => $stability,
+            'update_series' => 'true',
         ]));
 
         $zipPath = $this->winlibsDirectory . "/lib/lib-$ref-$vsVersion-$arch.zip";
@@ -85,7 +86,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
             'php_versions' => $phpVersion,
-            'stability' => $stability
+            'stability' => $stability,
+            'update_series' => 'true',
         ]));
 
         file_put_contents($seriesFilePath, "existing-$ref-$vsVersion-$arch.zip");
@@ -123,7 +125,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
             'php_versions' => $phpVersion,
-            'stability' => $stability
+            'stability' => $stability,
+            'update_series' => 'true',
         ]));
 
         file_put_contents($seriesFilePath, "lib-1.0.0-$vsVersion-$arch.zip");
@@ -162,7 +165,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
             'php_versions' => '8.2',
-            'stability' => 'stable'
+            'stability' => 'stable',
+            'update_series' => 'true',
         ]));
 
         $zipPath = $this->winlibsDirectory . "/redis/redis-$ref-$vsVersion-$arch.zip";
@@ -254,7 +258,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
             'php_versions' => $phpVersion,
-            'stability' => 'staging'
+            'stability' => 'staging',
+            'update_series' => 'true',
         ]));
 
         $zipPath = $this->winlibsDirectory . "/lib/lib-$ref-$vsVersion-$arch.zip";
@@ -278,6 +283,51 @@ class WinlibsCommandTest extends TestCase
         $this->assertStringEqualsFile(
             $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-staging.txt",
             "lib-$ref-$vsVersion-$arch.zip"
+        );
+    }
+
+    public function testCopiesPhpSdkFilesWithoutUpdatingSeriesWhenDisabled(): void
+    {
+        mkdir($this->winlibsDirectory . '/curl', 0755, true);
+        mkdir($this->baseDirectory . '/php-sdk/deps/series', 0755, true);
+
+        $library = 'curl';
+        $ref = '8.8.0';
+        $phpVersion = '8.4';
+        $vsVersion = 'vs17';
+        $arch = 'x64';
+        $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-staging.txt";
+
+        file_put_contents($seriesFilePath, "existing-entry-$vsVersion-$arch.zip");
+
+        file_put_contents($this->winlibsDirectory . '/curl/data.json', json_encode([
+            'type' => 'php',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => 'staging',
+            'update_series' => 'false',
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/curl/curl-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('dummy_file.txt', 'dummy content');
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertFileExists($this->baseDirectory . "/php-sdk/deps/$vsVersion/$arch/curl-$ref-$vsVersion-$arch.zip");
+        $this->assertSame(
+            'existing-entry-vs17-x64.zip',
+            file_get_contents($seriesFilePath)
         );
     }
 
@@ -315,7 +365,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => '1.0.0',
             'vs_version_targets' => 'vs16',
             'php_versions' => '8.2',
-            'stability' => 'stable'
+            'stability' => 'stable',
+            'update_series' => 'true',
         ]));
         file_put_contents($this->winlibsDirectory . '/lib/not-a-valid-file.zip', 'dummy');
 
@@ -410,7 +461,8 @@ class WinlibsCommandTest extends TestCase
             'ref' => $ref,
             'vs_version_targets' => $vsVersion,
             'php_versions' => '8.2',
-            'stability' => 'stable'
+            'stability' => 'stable',
+            'update_series' => 'true',
         ]));
 
         $zipPath = $directory . "/$buildName-$ref-$vsVersion-$arch.zip";

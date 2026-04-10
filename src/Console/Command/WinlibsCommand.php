@@ -50,13 +50,16 @@ class WinlibsCommand extends Command
                 if ($files) {
                     if($data['type'] === 'php') {
                         $this->copyPhpFiles($files, $data['library'], $data['vs_version_targets']);
-                        $this->updatePhpSeriesFiles(
-                            $files,
-                            $data['library'],
-                            $data['php_versions'],
-                            $data['vs_version_targets'],
-                            $data['stability']
-                        );
+                        $updateSeries = $data['update_series'] ?? 'true';
+                        if ($updateSeries === 'true') {
+                            $this->updatePhpSeriesFiles(
+                                $files,
+                                $data['library'],
+                                $data['php_versions'],
+                                $data['vs_version_targets'],
+                                $data['stability']
+                            );
+                        }
                     } else {
                         $this->copyPeclFiles($files, $data['library']);
                         $this->updatePackagesFile($files, $data['library']);
