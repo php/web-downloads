@@ -165,25 +165,47 @@ class WinlibsCommand extends Command
                         $fileName = str_replace($file['artifact_name'], $library, $file['file_name']);
                         $arch = $file['arch'];
                         $seriesFile = $baseDirectory . "/packages-$php_version-$vs_version_target-$arch-$stability_value.txt";
+                        if (!file_exists($seriesFile) && $arch === 'arm64') {
+                            $this->seedArm64SeriesFile($baseDirectory, $php_version, $vs_version_target, $stability_value);
+                        }
+
                         if (!file_exists($seriesFile)) {
                             $file_lines = [$fileName];
                         } else {
                             $file_lines = file($seriesFile, FILE_IGNORE_NEW_LINES);
-                            $found = false;
-                            foreach ($file_lines as $no => $line) {
-                                if (str_starts_with($line, $library)) {
-                                    $file_lines[$no] = $fileName;
-                                    $found = true;
-                                }
+                        }
+
+                        $found = false;
+                        foreach ($file_lines as $no => $line) {
+                            if (str_starts_with($line, $library)) {
+                                $file_lines[$no] = $fileName;
+                                $found = true;
                             }
-                            if (!$found) {
-                                $file_lines[] = $fileName;
-                            }
+                        }
+                        if (!$found) {
+                            $file_lines[] = $fileName;
                         }
                         file_put_contents($seriesFile, implode("\n", $file_lines));
                     }
                 }
             }
+        }
+    }
+
+    private function seedArm64SeriesFile(
+        string $baseDirectory,
+        string $phpVersion,
+        string $vsVersionTarget,
+        string $stability
+    ): void {
+        $arm64SeriesFile = $baseDirectory . "/packages-$phpVersion-$vsVersionTarget-arm64-$stability.txt";
+        if (file_exists($arm64SeriesFile)) {
+            return;
+        }
+
+        $x64SeriesFile = $baseDirectory . "/packages-$phpVersion-$vsVersionTarget-x64-$stability.txt";
+        if (file_exists($x64SeriesFile)) {
+            copy($x64SeriesFile, $arm64SeriesFile);
         }
     }
 

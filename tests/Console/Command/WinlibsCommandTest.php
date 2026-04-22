@@ -186,6 +186,14 @@ class WinlibsCommandTest extends TestCase
         $this->assertFileExists($this->baseDirectory . "/pecl/deps/$library-$ref-$vsVersion-$arch.zip");
     }
 
+    public function testSuccessfulPeclArm64FileOperations(): void
+    {
+        $result = $this->runPeclWinlibsCommand('redis', 'phpredis', '5.3.7', 'vs16', 'arm64');
+
+        $this->assertSame(0, $result, 'Command should return success.');
+        $this->assertFileExists($this->baseDirectory . '/pecl/deps/phpredis-5.3.7-vs16-arm64.zip');
+    }
+
     public function testPackagesFileIsGenerated(): void
     {
         $result = $this->runPeclWinlibsCommand('redis', 'phpredis', '5.3.7', 'vs16', 'x64');
@@ -331,6 +339,100 @@ class WinlibsCommandTest extends TestCase
         );
     }
 
+    public function testCreatesMissingPhpSdkArm64DirectoryAndCopiesArtifact(): void
+    {
+        mkdir($this->winlibsDirectory . '/curl', 0755, true);
+
+        $library = 'curl';
+        $ref = '8.8.0';
+        $phpVersion = '8.4';
+        $vsVersion = 'vs17';
+        $arch = 'arm64';
+
+        file_put_contents($this->winlibsDirectory . '/curl/data.json', json_encode([
+            'type' => 'php',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => 'staging',
+            'update_series' => 'false',
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/curl/curl-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('dummy_file.txt', 'dummy content');
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertDirectoryExists($this->baseDirectory . "/php-sdk/deps/$vsVersion/$arch");
+        $this->assertFileExists($this->baseDirectory . "/php-sdk/deps/$vsVersion/$arch/curl-$ref-$vsVersion-$arch.zip");
+    }
+
+    public function testSeedsMissingArm64SeriesFileFromX64BeforeReplacingLibrary(): void
+    {
+        mkdir($this->winlibsDirectory . '/curl', 0755, true);
+        mkdir($this->baseDirectory . '/php-sdk/deps/series', 0755, true);
+
+        $library = 'curl';
+        $ref = '8.8.0';
+        $phpVersion = '8.4';
+        $vsVersion = 'vs17';
+        $arch = 'arm64';
+        $stability = 'staging';
+
+        file_put_contents(
+            $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-x64-$stability.txt",
+            implode("\n", [
+                "curl-8.7.1-$vsVersion-x64.zip",
+                "openssl-3.4.1-$vsVersion-x64.zip",
+            ])
+        );
+
+        file_put_contents($this->winlibsDirectory . '/curl/data.json', json_encode([
+            'type' => 'php',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => $stability,
+            'update_series' => 'true',
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/curl/curl-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('dummy_file.txt', 'dummy content');
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertSame(
+            [
+                "curl-$ref-$vsVersion-$arch.zip",
+                "openssl-3.4.1-$vsVersion-x64.zip",
+            ],
+            file(
+                $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt",
+                FILE_IGNORE_NEW_LINES
+            )
+        );
+    }
+
     public function testCommandHandlesMissingBaseDirectory(): void
     {
         $command = new WinlibsCommand();
@@ -446,6 +548,14 @@ class WinlibsCommandTest extends TestCase
                 'artifact_name' => 'zlib',
                 'vs_version'    => 'vs16',
                 'arch'          => 'x86',
+            ]],
+            ['/tmp/curl-8.8.0-vs17-arm64.zip', [
+                'file_path'     => '/tmp/curl-8.8.0-vs17-arm64.zip',
+                'file_name'     => 'curl-8.8.0-vs17-arm64.zip',
+                'extension'     => 'zip',
+                'artifact_name' => 'curl',
+                'vs_version'    => 'vs17',
+                'arch'          => 'arm64',
             ]],
         ];
     }
