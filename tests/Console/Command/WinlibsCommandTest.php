@@ -433,6 +433,58 @@ class WinlibsCommandTest extends TestCase
         );
     }
 
+    public function testSortsPhpSeriesFileAfterAddingLibrary(): void
+    {
+        mkdir($this->winlibsDirectory . '/brotli', 0755, true);
+        mkdir($this->baseDirectory . '/php-sdk/deps/series', 0755, true);
+
+        $library = 'brotli';
+        $ref = '1.1.0';
+        $phpVersion = '8.4';
+        $vsVersion = 'vs17';
+        $arch = 'x64';
+        $stability = 'staging';
+        $seriesFilePath = $this->baseDirectory . "/php-sdk/deps/series/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
+
+        file_put_contents($seriesFilePath, implode("\n", [
+            "curl-8.8.0-$vsVersion-$arch.zip",
+            "openssl-3.4.1-$vsVersion-$arch.zip",
+        ]));
+
+        file_put_contents($this->winlibsDirectory . '/brotli/data.json', json_encode([
+            'type' => 'php',
+            'library' => $library,
+            'ref' => $ref,
+            'vs_version_targets' => $vsVersion,
+            'php_versions' => $phpVersion,
+            'stability' => $stability,
+            'update_series' => 'true',
+        ]));
+
+        $zipPath = $this->winlibsDirectory . "/brotli/brotli-$ref-$vsVersion-$arch.zip";
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('dummy_file.txt', 'dummy content');
+            $zip->close();
+        }
+
+        $command = new WinlibsCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertSame(
+            [
+                "brotli-$ref-$vsVersion-$arch.zip",
+                "curl-8.8.0-$vsVersion-$arch.zip",
+                "openssl-3.4.1-$vsVersion-$arch.zip",
+            ],
+            file($seriesFilePath, FILE_IGNORE_NEW_LINES)
+        );
+    }
+
     public function testCommandHandlesMissingBaseDirectory(): void
     {
         $command = new WinlibsCommand();

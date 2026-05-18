@@ -127,6 +127,8 @@ class SeriesUpdateCommand extends Command
                 $lines[] = $package;
             }
 
+            sort($lines, SORT_STRING);
+
             if (empty($lines)) {
                 if (file_exists($filePath)) {
                     unlink($filePath);

@@ -185,6 +185,8 @@ class WinlibsCommand extends Command
                         if (!$found) {
                             $file_lines[] = $fileName;
                         }
+
+                        sort($file_lines, SORT_STRING);
                         file_put_contents($seriesFile, implode("\n", $file_lines));
                     }
                 }

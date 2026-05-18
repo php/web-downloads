@@ -111,11 +111,56 @@ class SeriesUpdateCommandTest extends TestCase
 
         $x86Lines = file($filePathX86, FILE_IGNORE_NEW_LINES);
         $this->assertSame([
-            'zlib-1.2.13-vs16-x86.zip',
             'libxml2-2.9.15-vs16-x86.zip',
+            'zlib-1.2.13-vs16-x86.zip',
         ], $x86Lines);
 
         $this->assertEmpty(glob($this->buildsDirectory . '/series/series-update-*.json'));
+    }
+
+    public function testAddsLibraryInSortedOrder(): void
+    {
+        $seriesDirectory = $this->baseDirectory . '/php-sdk/deps/series';
+        mkdir($seriesDirectory, 0755, true);
+
+        $filePathX64 = $seriesDirectory . '/packages-8.4-vs17-x64-staging.txt';
+        $filePathX86 = $seriesDirectory . '/packages-8.4-vs17-x86-staging.txt';
+
+        file_put_contents($filePathX64, implode("\n", [
+            'curl-8.8.0-vs17-x64.zip',
+            'openssl-3.4.1-vs17-x64.zip',
+        ]));
+
+        file_put_contents($filePathX86, implode("\n", [
+            'curl-8.8.0-vs17-x86.zip',
+            'openssl-3.4.1-vs17-x86.zip',
+        ]));
+
+        $this->createTask([
+            'php_version' => '8.4',
+            'vs_version' => 'vs17',
+            'stability' => 'staging',
+            'library' => 'brotli',
+            'ref' => '1.1.0',
+        ]);
+
+        $command = new SeriesUpdateCommand();
+        $command->setOption('base-directory', $this->baseDirectory);
+        $command->setOption('builds-directory', $this->buildsDirectory);
+
+        $result = $command->handle();
+
+        $this->assertSame(0, $result);
+        $this->assertSame([
+            'brotli-1.1.0-vs17-x64.zip',
+            'curl-8.8.0-vs17-x64.zip',
+            'openssl-3.4.1-vs17-x64.zip',
+        ], file($filePathX64, FILE_IGNORE_NEW_LINES));
+        $this->assertSame([
+            'brotli-1.1.0-vs17-x86.zip',
+            'curl-8.8.0-vs17-x86.zip',
+            'openssl-3.4.1-vs17-x86.zip',
+        ], file($filePathX86, FILE_IGNORE_NEW_LINES));
     }
 
     public function testRemovesLibraryWhenNoPackageProvided(): void
