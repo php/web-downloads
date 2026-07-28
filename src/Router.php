@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\Http\BaseController;
+use App\Http\DeferredCallbacks;
 use JsonException;
 
 class Router
@@ -28,6 +29,18 @@ class Router
      * @throws JsonException
      */
     public function handleRequest(): void
+    {
+        try {
+            $this->dispatchRequest();
+        } finally {
+            DeferredCallbacks::invoke();
+        }
+    }
+
+    /**
+     * @throws JsonException
+     */
+    private function dispatchRequest(): void
     {
         $path = $_SERVER['REQUEST_URI'];
         $method = $_SERVER['REQUEST_METHOD'];

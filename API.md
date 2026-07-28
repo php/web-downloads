@@ -93,10 +93,11 @@ curl -i -X POST \
 - Request body (JSON):
     - `url` (string, required, URL): Direct download URL of the artifact.
     - `token` (string, required): Used as a GitHub token if the URL points to `api.github.com`.
-- Success: `200 OK`.
+- Success: `200 OK`, returned as soon as the download is accepted. The download continues after the response and the completed ZIP is published atomically in `BUILDS_DIRECTORY/php`.
 - Errors:
     - `400` with validation details if `url` or `token` are missing/invalid.
-    - `500` with `Error: ...` if the file could not be fetched or is not a ZIP.
+    - `500` with `Error: ...` if the download cannot be prepared.
+    - Download failures after the response are written to the server error log and no ZIP is published.
 
 Example
 

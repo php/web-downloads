@@ -172,7 +172,7 @@ class PhpCommandTest extends TestCase
         $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
         $command->handle();
-        $tempDirectory = "/tmp/php-*";
+        $tempDirectory = sys_get_temp_dir() . '/php-web-downloads-*';
         $this->assertEmpty(glob($tempDirectory));
     }
 

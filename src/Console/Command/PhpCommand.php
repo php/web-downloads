@@ -57,7 +57,7 @@ class PhpCommand extends Command
 
             foreach ($filteredFiles as $filepath) {
                 $hash = hash('sha256', $filepath) . uniqid('', true);
-                $tempDirectory = "/tmp/php-" . $hash;
+                $tempDirectory = sys_get_temp_dir() . '/php-web-downloads-' . $hash;
 
                 if (is_dir($tempDirectory)) {
                     Helpers::rmdirr($tempDirectory);
@@ -97,7 +97,7 @@ class PhpCommand extends Command
             return Command::SUCCESS;
         } catch (Exception $e) {
             echo $e->getMessage();
-            $tempDirectories = glob('/tmp/php-*');
+            $tempDirectories = glob(sys_get_temp_dir() . '/php-web-downloads-*');
             if($tempDirectories) {
                 foreach ($tempDirectories as $tempDirectory) {
                     Helpers::rmdirr($tempDirectory);
