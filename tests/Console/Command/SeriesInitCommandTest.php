@@ -35,6 +35,7 @@ class SeriesInitCommandTest extends TestCase
         return [
             ['8.3', 'vs17', 'vs17'],
             ['8.2', 'vs16', 'vs16'],
+            ['8.7', 'vs18', 'vs18'],
         ];
     }
 

@@ -246,14 +246,19 @@ class WinlibsCommandTest extends TestCase
         ];
     }
 
-    public function testSyncsStableAndStagingSeriesFilesForConfiguredUpcomingSeries(): void
+    public static function upcomingSeriesProvider(): array
+    {
+        return [['8.6'], ['8.7'], ['master']];
+    }
+
+    #[DataProvider('upcomingSeriesProvider')]
+    public function testSyncsStableAndStagingSeriesFilesForConfiguredUpcomingSeries(string $phpVersion): void
     {
         mkdir($this->winlibsDirectory . '/lib', 0755, true);
 
         $library = 'lib';
         $ref = '2.0.0';
-        $phpVersion = 'master';
-        $vsVersion = 'vs17';
+        $vsVersion = 'vs18';
         $arch = 'x64';
 
         file_put_contents($this->winlibsDirectory . '/lib/data.json', json_encode([
