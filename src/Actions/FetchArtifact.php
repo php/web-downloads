@@ -52,7 +52,6 @@ class FetchArtifact
         $error = curl_error($ch);
         $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         fclose($fp);
-        curl_close($ch);
 
         if ($result === false) {
             @unlink($filepath);
@@ -96,7 +95,6 @@ class FetchArtifact
 
         $result = curl_exec($ch);
         $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         return $result !== false && $httpCode === 206 && $size > 0 ? $size : null;
     }
@@ -162,7 +160,6 @@ class FetchArtifact
                 $result = curl_multi_add_handle($multiHandle, $handle);
                 if ($result !== CURLM_OK) {
                     fclose($stream);
-                    curl_close($handle);
                     throw new RuntimeException('Failed to start an artifact range');
                 }
 
@@ -199,7 +196,6 @@ class FetchArtifact
         } finally {
             foreach ($downloads as $download) {
                 curl_multi_remove_handle($multiHandle, $download['handle']);
-                curl_close($download['handle']);
                 fclose($download['stream']);
             }
 
