@@ -43,6 +43,8 @@ abstract class Command
         for ($i = 1; $i < $argc; $i++) {
             if (preg_match('/^--([^=]+)=(.*)$/', (string) $argv[$i], $matches)) {
                 $this->options[$matches[1]] = $matches[2];
+            } elseif (preg_match('/^--([A-Za-z][A-Za-z0-9-]*)$/', (string) $argv[$i], $matches)) {
+                $this->options[$matches[1]] = true;
             } else {
                 if (isset($signatureParts[$argCount])) {
                     $this->arguments[$signatureParts[$argCount]] = $argv[$i];

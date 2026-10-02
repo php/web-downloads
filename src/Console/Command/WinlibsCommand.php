@@ -7,6 +7,7 @@ use App\Console\Command;
 use App\Helpers\Helpers;
 use Exception;
 use JsonException;
+use Throwable;
 
 class WinlibsCommand extends Command
 {
@@ -18,6 +19,10 @@ class WinlibsCommand extends Command
     public function handle(): int
     {
         try {
+            if (array_diff(array_keys($this->options), ['base-directory', 'builds-directory']) !== []) {
+                throw new Exception('Unsupported option for winlibs:add');
+            }
+
             $this->baseDirectory = $this->options['base-directory'] ?? null;
             if (!$this->baseDirectory) {
                 throw new Exception('Base directory is required');
@@ -29,48 +34,64 @@ class WinlibsCommand extends Command
             }
 
             $buildDirectories = glob($buildsDirectory . '/winlibs/*', GLOB_ONLYDIR);
+            if ($buildDirectories === false) {
+                throw new Exception('Unable to list Winlibs jobs');
+            }
 
-            // We lock the Directories we are working on
-            // so that we don't process them again if the command is run again
-            $filteredDirectories = [];
+            $errors = [];
+
             foreach ($buildDirectories as $directoryPath) {
+                if (str_starts_with(basename($directoryPath), 'delete-')) {
+                    continue;
+                }
+
                 $lockFile = $directoryPath . '.lock';
-                if (!file_exists($lockFile)) {
-                    touch($lockFile);
-                    $filteredDirectories[] = $directoryPath;
+                if (file_exists($lockFile)) {
+                    continue;
+                }
+                if (!touch($lockFile)) {
+                    $errors[] = 'Unable to lock Winlibs job: ' . basename($directoryPath);
+                    continue;
+                }
+
+                try {
+                    $data = json_decode((string) file_get_contents($directoryPath . '/data.json'), true, 512, JSON_THROW_ON_ERROR);
+                    $files = glob($directoryPath . '/*.zip');
+                    $files = $this->parseFiles($files);
+                    if (empty($files)) {
+                        throw new Exception('No valid files found in ' . basename($directoryPath));
+                    }
+                    if ($data['type'] === 'php') {
+                        $this->copyPhpFiles($files, $data['library'], $data['vs_version_targets']);
+                        $updateSeries = $data['update_series'] ?? 'true';
+                        if ($updateSeries === 'true') {
+                            $this->updatePhpSeriesFiles(
+                                $files,
+                                $data['library'],
+                                $data['php_versions'],
+                                $data['vs_version_targets'],
+                                $data['stability']
+                            );
+                        }
+                    } else {
+                        $this->copyPeclFiles($files, $data['library']);
+                        $this->updatePackagesFile();
+                    }
+
+                    if (!Helpers::rmdirr($directoryPath)) {
+                        throw new Exception('Unable to remove Winlibs job: ' . basename($directoryPath));
+                    }
+                    unlink($lockFile);
+                } catch (Throwable $error) {
+                    $errors[] = $error->getMessage();
                 }
             }
 
-            foreach ($filteredDirectories as $directoryPath) {
-                $data = json_decode(file_get_contents($directoryPath . '/data.json'), true, 512, JSON_THROW_ON_ERROR);
-                $files = glob($directoryPath . '/*.zip');
-                $files = $this->parseFiles($files);
-                if (empty($files)) {
-                    throw new Exception('No valid files found in ' . basename($directoryPath));
-                }
-                if($data['type'] === 'php') {
-                    $this->copyPhpFiles($files, $data['library'], $data['vs_version_targets']);
-                    $updateSeries = $data['update_series'] ?? 'true';
-                    if ($updateSeries === 'true') {
-                        $this->updatePhpSeriesFiles(
-                            $files,
-                            $data['library'],
-                            $data['php_versions'],
-                            $data['vs_version_targets'],
-                            $data['stability']
-                        );
-                    }
-                } else {
-                    $this->copyPeclFiles($files, $data['library']);
-                    $this->updatePackagesFile();
-                }
-
-                Helpers::rmdirr($directoryPath);
-
-                unlink($directoryPath . '.lock');
+            if ($errors !== []) {
+                throw new Exception(implode("\n", $errors));
             }
             return Command::SUCCESS;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             echo $e->getMessage();
             return Command::FAILURE;
         }

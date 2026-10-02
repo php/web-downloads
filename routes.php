@@ -12,6 +12,7 @@ use App\Http\Controllers\SeriesInitController;
 use App\Http\Controllers\SeriesStabilityController;
 use App\Http\Controllers\SeriesUpdateController;
 use App\Http\Controllers\WinlibsController;
+use App\Http\Controllers\WinlibsDeleteController;
 use App\Router;
 
 $router = new Router();
@@ -20,6 +21,7 @@ $router->registerRoute('/api/list-builds', 'GET', ListBuildsController::class, t
 $router->registerRoute('/api/delete-pending-job', 'POST', DeletePendingJobController::class, true);
 $router->registerRoute('/api/pecl', 'POST', PeclController::class, true);
 $router->registerRoute('/api/winlibs', 'POST', WinlibsController::class, true);
+$router->registerRoute('/api/winlibs-delete', 'POST', WinlibsDeleteController::class, true);
 $router->registerRoute('/api/php', 'POST', PhpController::class, true);
 $router->registerRoute('/api/sbom-update', 'POST', SbomUpdateController::class, true);
 $router->registerRoute('/api/series-init', 'POST', SeriesInitController::class, true);

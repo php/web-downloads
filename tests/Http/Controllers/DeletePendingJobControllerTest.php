@@ -102,6 +102,28 @@ class DeletePendingJobControllerTest extends TestCase
         unlink($inputFile);
     }
 
+    /**
+     * @throws JsonException
+     */
+    public function testRejectsParentDirectoryAsWinlibsJob(): void
+    {
+        mkdir($this->tempDir . '/winlibs', 0755, true);
+        $payload = json_encode(['type' => 'winlibs', 'job' => '..'], JSON_THROW_ON_ERROR);
+        $inputFile = $this->createInputFile($payload);
+
+        http_response_code(200);
+        $controller = new DeletePendingJobController($inputFile, $this->tempDir);
+        ob_start();
+        $controller->handle();
+        $output = ob_get_clean();
+
+        static::assertSame(400, http_response_code());
+        static::assertStringContainsString('Invalid request', $output);
+        static::assertDirectoryExists($this->tempDir);
+
+        unlink($inputFile);
+    }
+
     private function createInputFile(string $json): string
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'delete-pending-input-');

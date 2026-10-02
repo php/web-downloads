@@ -30,6 +30,7 @@
 - [`POST /api/php`](#post-apiphp)
 - [`POST /api/pecl`](#post-apipecl)
 - [`POST /api/winlibs`](#post-apiwinlibs)
+- [`POST /api/winlibs-delete`](#post-apiwinlibs-delete)
 - [`POST /api/sbom-update`](#post-apisbom-update)
 - [`POST /api/series-init`](#post-apiseries-init)
 - [`POST /api/series-delete`](#post-apiseries-delete)
@@ -182,6 +183,33 @@ curl -i -X POST \
             "token": "ghp_..."
         }' \
     https://downloads.php.net/api/winlibs
+```
+
+---
+
+### POST /api/winlibs-delete
+
+- Auth: Required
+- Purpose: Queue deletion of one published Winlibs ZIP and its package references. The API writes a `winlibs/delete-*/data.json` job into the existing Winlibs queue.
+- Processor: `php runner.php winlibs:delete --base-directory=<downloads-root> --builds-directory=<builds-root>`. Deletion jobs remain queued until this command runs.
+- Request body (JSON):
+    - `type` (string, required): `php` or `pecl`.
+    - `filename` (string, required): Exact ZIP basename, such as `libcurl-8.22.0-1-vs18-x64.zip`. Paths and non-ZIP names are rejected.
+- For `php`, the processor removes exact matching lines from every `php-sdk/deps/series/packages-*.txt` file and deletes every copy of that filename under `php-sdk/deps/<VS>/<arch>/`. This covers builds copied to multiple VS targets. An empty series file is removed.
+- For `pecl`, the processor removes the exact line from `pecl/deps/packages.txt` and deletes `pecl/deps/<filename>`. It leaves every unrelated index entry unchanged.
+- Success: `200 OK`, empty body, meaning the deletion was queued. Repeating a deletion is safe.
+- Errors:
+    - `400` with validation details if the payload is invalid.
+    - `500` if `BUILDS_DIRECTORY` is not configured or the job cannot be queued.
+
+Example
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"type":"php","filename":"libcurl-8.22.0-1-vs18-x64.zip"}' \
+    https://downloads.php.net/api/winlibs-delete
 ```
 
 ---

@@ -24,7 +24,7 @@ class DeletePendingJobController extends BaseController
     {
         $validator = new Validator([
             'type' => 'required|string|regex:/^(php|pecl|winlibs)$/i',
-            'job' => 'required|string|regex:/^[A-Za-z0-9._-]+$/',
+            'job' => 'required|string|regex:/\A(?!\.{1,2}\z)[A-Za-z0-9._-]+\z/',
         ]);
 
         $validator->validate($data);
