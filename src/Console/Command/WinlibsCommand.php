@@ -58,6 +58,10 @@ class WinlibsCommand extends Command
                     $data = json_decode((string) file_get_contents($directoryPath . '/data.json'), true, 512, JSON_THROW_ON_ERROR);
                     $files = glob($directoryPath . '/*.zip');
                     $files = $this->parseFiles($files);
+                    $arch = $data['arch'] ?? 'all';
+                    if ($arch !== 'all') {
+                        $files = array_filter($files, static fn (array $file): bool => $file['arch'] === $arch);
+                    }
                     if (empty($files)) {
                         throw new Exception('No valid files found in ' . basename($directoryPath));
                     }
