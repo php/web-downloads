@@ -5,6 +5,7 @@ namespace Console\Command;
 
 use App\Console\Command\SeriesUpdateCommand;
 use App\Helpers\Helpers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class SeriesUpdateCommandTest extends TestCase
@@ -244,6 +245,114 @@ class SeriesUpdateCommandTest extends TestCase
         $this->assertSame([
             'libpq-16.0.0-vs17-x86.zip',
         ], file($filePathX86, FILE_IGNORE_NEW_LINES));
+        $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.3-vs17-arm64-staging.txt');
+    }
+
+    public static function arm64UpdateProvider(): array
+    {
+        return [
+            'replace x64 placeholder' => [true, 'libffi-3.7.0-vs16-x64.zip', true],
+            'replace old ARM64 build' => [true, 'libffi-3.7.0-vs16-arm64.zip', true],
+            'add available ARM64 library' => [true, null, true],
+            'keep x64 placeholder until upload' => [true, 'libffi-3.7.0-vs16-x64.zip', false],
+            'keep previous ARM64 build until upload' => [true, 'libffi-3.7.0-vs16-arm64.zip', false],
+            'skip unavailable ARM64 library' => [true, null, false],
+            'skip missing ARM64 series' => [false, null, true],
+            'skip absent ARM64 support' => [false, null, false],
+        ];
+    }
+
+    #[DataProvider('arm64UpdateProvider')]
+    public function testUpdatesArm64OnlyWhenSeriesAndRequestedArtifactExist(bool $hasSeries, ?string $existingLibrary, bool $hasArtifact): void
+    {
+        $seriesBase = $this->baseDirectory . '/php-sdk/deps/series';
+        $artifactBase = $this->baseDirectory . '/php-sdk/deps/vs16/arm64';
+        mkdir($seriesBase, 0755, true);
+        mkdir($artifactBase, 0755, true);
+        $seriesFile = "$seriesBase/packages-8.2-vs16-arm64-staging.txt";
+        $package = 'libffi-3.8.0-1-vs16-arm64.zip';
+        $lines = ['zlib-1.3.2-vs16-x64.zip'];
+        if ($existingLibrary !== null) {
+            array_unshift($lines, $existingLibrary);
+        }
+        if ($hasSeries) {
+            file_put_contents($seriesFile, implode("\n", $lines));
+        }
+        // An older artifact must not satisfy the check for the requested version.
+        file_put_contents("$artifactBase/libffi-3.7.0-vs16-arm64.zip", 'old artifact');
+        if ($hasArtifact) {
+            file_put_contents("$artifactBase/$package", 'new artifact');
+        }
+        $taskFile = $this->createTask([
+            'php_version' => '8.2',
+            'vs_version' => 'vs16',
+            'stability' => 'staging',
+            'library' => 'libffi',
+            'ref' => '3.8.0-1',
+        ]);
+
+        $command = new SeriesUpdateCommand();
+        $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
+        $this->assertSame(0, $command->handle());
+
+        if ($hasSeries) {
+            $expected = $hasArtifact ? [$package, 'zlib-1.3.2-vs16-x64.zip'] : $lines;
+            $this->assertSame($expected, file($seriesFile, FILE_IGNORE_NEW_LINES));
+        } else {
+            $this->assertFileDoesNotExist($seriesFile);
+        }
+        foreach (['x86', 'x64'] as $arch) {
+            $this->assertStringEqualsFile("$seriesBase/packages-8.2-vs16-$arch-staging.txt", "libffi-3.8.0-1-vs16-$arch.zip");
+        }
+        $this->assertFileDoesNotExist($taskFile);
+        $this->assertFileDoesNotExist($taskFile . '.lock');
+    }
+
+    public static function arm64RemovalProvider(): array
+    {
+        return [
+            'mixed series' => [["libffi-3.8.0-1-vs16-arm64.zip", "zlib-1.3.2-vs16-x64.zip"], ['zlib-1.3.2-vs16-x64.zip']],
+            'x64 placeholder' => [['libffi-3.7.0-vs16-x64.zip'], null],
+            'missing series' => [null, null],
+        ];
+    }
+
+    #[DataProvider('arm64RemovalProvider')]
+    public function testRemovesArm64LibraryAndArtifacts(?array $lines, ?array $remaining): void
+    {
+        $seriesBase = $this->baseDirectory . '/php-sdk/deps/series';
+        $artifactBase = $this->baseDirectory . '/php-sdk/deps/vs16/arm64';
+        mkdir($seriesBase, 0755, true);
+        mkdir($artifactBase, 0755, true);
+        $seriesFile = "$seriesBase/packages-8.2-vs16-arm64-staging.txt";
+        if ($lines !== null) {
+            file_put_contents($seriesFile, implode("\n", $lines));
+        }
+        $artifact = "$artifactBase/libffi-3.8.0-1-vs16-arm64.zip";
+        $unrelated = "$artifactBase/zlib-1.3.2-vs16-arm64.zip";
+        file_put_contents($artifact, 'remove');
+        file_put_contents($unrelated, 'keep');
+        $taskFile = $this->createTask([
+            'php_version' => '8.2',
+            'vs_version' => 'vs16',
+            'stability' => 'staging',
+            'library' => 'libffi',
+            'ref' => '',
+        ]);
+
+        $command = new SeriesUpdateCommand();
+        $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
+        $this->assertSame(0, $command->handle());
+
+        if ($remaining !== null) {
+            $this->assertSame($remaining, file($seriesFile, FILE_IGNORE_NEW_LINES));
+        } else {
+            $this->assertFileDoesNotExist($seriesFile);
+        }
+        $this->assertFileDoesNotExist($artifact);
+        $this->assertStringEqualsFile($unrelated, 'keep');
+        $this->assertFileDoesNotExist($taskFile);
+        $this->assertFileDoesNotExist($taskFile . '.lock');
     }
 
     public function testSkipsLockedTask(): void

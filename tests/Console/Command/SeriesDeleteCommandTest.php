@@ -88,6 +88,8 @@ class SeriesDeleteCommandTest extends TestCase
             "$seriesBase/packages-$phpVersion-$vsVersion-x86-staging.txt",
             "$seriesBase/packages-$phpVersion-$vsVersion-x64-stable.txt",
             "$seriesBase/packages-$phpVersion-$vsVersion-x64-staging.txt",
+            "$seriesBase/packages-$phpVersion-$vsVersion-arm64-stable.txt",
+            "$seriesBase/packages-$phpVersion-$vsVersion-arm64-staging.txt",
         ];
         foreach ($paths as $p) {
             file_put_contents($p, "dummy");
@@ -133,6 +135,8 @@ class SeriesDeleteCommandTest extends TestCase
         $missing = [
             "$seriesBase/packages-$phpVersion-$vsVersion-x86-staging.txt",
             "$seriesBase/packages-$phpVersion-$vsVersion-x64-stable.txt",
+            "$seriesBase/packages-$phpVersion-$vsVersion-arm64-stable.txt",
+            "$seriesBase/packages-$phpVersion-$vsVersion-arm64-staging.txt",
         ];
 
         $seriesDir = $this->buildsDirectory . '/series';

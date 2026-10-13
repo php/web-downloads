@@ -10,11 +10,21 @@ class SeriesInitController extends BaseController
 {
     protected function validate(array $data): bool
     {
-        $validator = new Validator([
-            'php_version' => 'required|string|regex:/^\d+\.\d+$/',
-            'source_vs' => 'required|string|regex:/^v[c|s]\d{2}$/',
-            'target_vs' => 'required|string|regex:/^v[c|s]\d{2}$/',
-        ]);
+        $data += ['subject' => 'vs'];
+        $rules = [
+            'subject' => 'required|string|regex:/\A(?:vs|arch)\z/',
+            'php_version' => $data['subject'] === 'arch'
+                ? 'required|string|regex:/\A(?:\d+\.\d+|master)\z/'
+                : 'required|string|regex:/^\d+\.\d+$/',
+        ];
+        if ($data['subject'] === 'arch') {
+            $rules['source_arch'] = 'required|string|regex:/\A(?:x86|x64|arm64)\z/';
+            $rules['target_arch'] = 'required|string|regex:/\A(?:x86|x64|arm64)\z/';
+        } else {
+            $rules['source_vs'] = 'required|string|regex:/^v[c|s]\d{2}$/';
+            $rules['target_vs'] = 'required|string|regex:/^v[c|s]\d{2}$/';
+        }
+        $validator = new Validator($rules);
 
         $validator->validate($data);
 

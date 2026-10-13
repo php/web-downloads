@@ -73,10 +73,13 @@ class SeriesStabilityCommand extends Command
         if (!is_dir($baseDirectory)) {
             mkdir($baseDirectory, 0755, true);
         }
-        foreach(['x86', 'x64'] as $arch) {
+        foreach(['x86', 'x64', 'arm64'] as $arch) {
             $sourceFile = $baseDirectory . '/packages-' . $php_version . '-' . $vs_version . '-' . $arch . '-staging.txt';
             $destinationFile = $baseDirectory . '/packages-' . $php_version . '-' . $vs_version . '-' . $arch . '-stable.txt';
             if(!file_exists($sourceFile)) {
+                if ($arch === 'arm64') {
+                    continue;
+                }
                 throw new Exception($sourceFile . ' does not exist');
             }
             copy($sourceFile, $destinationFile);

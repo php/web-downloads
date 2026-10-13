@@ -94,18 +94,23 @@ class SeriesUpdateCommand extends Command
             mkdir($seriesDirectory, 0755, true);
         }
 
-        $arches = ['x86', 'x64'];
+        $arches = ['x86', 'x64', 'arm64'];
 
         foreach ($arches as $arch) {
             $filePath = $seriesDirectory . "/packages-$phpVersion-$vsVersion-$arch-$stability.txt";
+            $refValue = trim($ref);
+            $package = $refValue === '' ? null : sprintf('%s-%s-%s-%s.zip', $library, $refValue, $vsVersion, $arch);
+
+            // ARM64 is populated incrementally; preserve existing entries until the requested build is uploaded.
+            if ($arch === 'arm64' && $package !== null
+                && (!is_file($filePath) || !is_file($this->baseDirectory . "/php-sdk/deps/$vsVersion/$arch/$package"))) {
+                continue;
+            }
 
             $lines = [];
             if (file_exists($filePath)) {
                 $lines = file($filePath, FILE_IGNORE_NEW_LINES);
             }
-
-            $refValue = trim($ref);
-            $package = $refValue === '' ? null : sprintf('%s-%s-%s-%s.zip', $library, $refValue, $vsVersion, $arch);
 
             $replaced = false;
             foreach ($lines as $index => $line) {

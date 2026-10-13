@@ -73,7 +73,7 @@ class SeriesDeleteCommand extends Command
         if (!is_dir($baseDirectory)) {
             mkdir($baseDirectory, 0755, true);
         }
-        foreach(['x86', 'x64'] as $arch) {
+        foreach(['x86', 'x64', 'arm64'] as $arch) {
             foreach(['stable', 'staging'] as $stability) {
                 $filePath = $baseDirectory . '/packages-' . $php_version . '-' . $vs_version . '-' . $arch . '-' . $stability . '.txt';
                 if(file_exists($filePath)) {

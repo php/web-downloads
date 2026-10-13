@@ -45,7 +45,7 @@ class PhpCommandTest extends TestCase
 
     public static function buildsProvider(): array
     {
-        return [
+        $builds = [
             [[
                 'php-8.4.1-Win32-vs17-x64.zip',
                 'php-8.4.1-Win32-vs17-x64.zip.cdx.json',
@@ -83,6 +83,13 @@ class PhpCommandTest extends TestCase
                 'php-test-pack-8.4.0-dev.zip',
             ]]
         ];
+        foreach ($builds as [$files]) {
+            $builds[] = [array_map(
+                static fn (string $file): string => str_replace('-x64', '-arm64', $file),
+                array_filter($files, static fn (string $file): bool => !str_contains($file, '-x86'))
+            )];
+        }
+        return $builds;
     }
 
     private function stageBuilds(array $phpZips, $zipPath): void
@@ -130,6 +137,21 @@ class PhpCommandTest extends TestCase
         $this->assertStringNotContainsString('.json', file_get_contents($expectedDestination . '/sha256sum.txt'));
         $this->assertStringNotContainsString('.json', file_get_contents($expectedDestination . '/sha1sum.txt'));
         $this->assertStringNotContainsString('.json', file_get_contents($expectedDestination . '/releases.json'));
+        if (str_contains($phpZips[0], '-arm64')) {
+            $releases = json_decode(file_get_contents($expectedDestination . '/releases.json'), true);
+            foreach (['ts', 'nts'] as $threadSafety) {
+                $build = $releases['8.4']["$threadSafety-vs17-arm64"];
+                foreach (['zip', 'debug_pack', 'devel_pack'] as $type) {
+                    $path = $build[$type]['path'];
+                    $this->assertSame(hash_file('sha256', "$expectedDestination/$path"), $build[$type]['sha256']);
+                    $this->assertFileEquals("$expectedDestination/$path", "$expectedDestination/archives/$path");
+                }
+                if ($expectedDestination === $this->baseDirectory . '/releases') {
+                    $latest = str_replace([$releases['8.4']['version'], '.zip'], ['8.4', '-latest.zip'], $build['zip']['path']);
+                    $this->assertFileEquals("$expectedDestination/" . $build['zip']['path'], "$expectedDestination/latest/$latest");
+                }
+            }
+        }
     }
 
     public function testCommandHandlerWithMissingTestPackZip(): void
@@ -176,8 +198,27 @@ class PhpCommandTest extends TestCase
         $this->assertEmpty(glob($tempDirectory));
     }
 
-    public function testStableReleasePromotesSeriesFiles(): void
+    public static function seriesPromotionProvider(): array
     {
+        return [
+            'no ARM64 files' => [null, null],
+            'ARM64 staging only' => ["libffi-3.8.0-1-vs17-arm64.zip\nzlib-1.3.2-vs17-x64.zip", null],
+            'ARM64 stable only' => [null, 'existing-arm64-stable'],
+            'both ARM64 files' => ['new-arm64-staging', 'existing-arm64-stable'],
+        ];
+    }
+
+    #[DataProvider('seriesPromotionProvider')]
+    public function testStableReleasePromotesSeriesFiles(?string $arm64Staging, ?string $arm64Stable): void
+    {
+        $seriesBase = $this->baseDirectory . '/php-sdk/deps/series';
+        $dstArm64 = "$seriesBase/packages-8.4-vs17-arm64-stable.txt";
+        if ($arm64Staging !== null) {
+            file_put_contents("$seriesBase/packages-8.4-vs17-arm64-staging.txt", $arm64Staging);
+        }
+        if ($arm64Stable !== null) {
+            file_put_contents($dstArm64, $arm64Stable);
+        }
         $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
 
@@ -190,10 +231,16 @@ class PhpCommandTest extends TestCase
         $this->assertFileExists($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt');
         $this->assertSame('x86-staging', file_get_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-stable.txt'));
         $this->assertSame('x64-staging', file_get_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt'));
+        if ($arm64Staging !== null || $arm64Stable !== null) {
+            $this->assertStringEqualsFile($dstArm64, $arm64Staging ?? $arm64Stable);
+        } else {
+            $this->assertFileDoesNotExist($dstArm64);
+        }
     }
 
     public function testQaReleaseDoesNotPromoteSeriesFiles(): void
     {
+        file_put_contents($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-arm64-staging.txt', 'arm64-staging');
         $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
         $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
 
@@ -204,5 +251,6 @@ class PhpCommandTest extends TestCase
         $this->assertSame(0, $result);
         $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-stable.txt');
         $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt');
+        $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-arm64-stable.txt');
     }
 }

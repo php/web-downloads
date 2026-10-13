@@ -35,6 +35,9 @@ class SeriesStabilityCommandTest extends TestCase
         return [
             ['8.3', 'vs17'],
             ['8.2', 'vs16'],
+            ['8.4', 'vs17', "libffi-3.8.0-1-vs17-arm64.zip\nzlib-1.3.2-vs17-x64.zip"],
+            ['8.4', 'vs17', null, 'existing-arm64-stable'],
+            ['8.4', 'vs17', 'new-arm64-staging', 'existing-arm64-stable'],
         ];
     }
 
@@ -78,7 +81,7 @@ class SeriesStabilityCommandTest extends TestCase
     }
 
     #[DataProvider('versionProvider')]
-    public function testPromotesStagingToStableAndCleansTask(string $phpVersion, string $vsVersion): void
+    public function testPromotesStagingToStableAndCleansTask(string $phpVersion, string $vsVersion, ?string $arm64Staging = null, ?string $arm64Stable = null): void
     {
         $seriesBase = $this->baseDirectory . '/php-sdk/deps/series';
         mkdir($seriesBase, 0755, true);
@@ -87,6 +90,14 @@ class SeriesStabilityCommandTest extends TestCase
         $srcX64 = "$seriesBase/packages-$phpVersion-$vsVersion-x64-staging.txt";
         file_put_contents($srcX86, "x86-content");
         file_put_contents($srcX64, "x64-content");
+        $srcArm64 = "$seriesBase/packages-$phpVersion-$vsVersion-arm64-staging.txt";
+        $dstArm64 = "$seriesBase/packages-$phpVersion-$vsVersion-arm64-stable.txt";
+        if ($arm64Staging !== null) {
+            file_put_contents($srcArm64, $arm64Staging);
+        }
+        if ($arm64Stable !== null) {
+            file_put_contents($dstArm64, $arm64Stable);
+        }
 
         $seriesDir = $this->buildsDirectory . '/series';
         mkdir($seriesDir, 0755, true);
@@ -108,6 +119,11 @@ class SeriesStabilityCommandTest extends TestCase
         $this->assertFileExists($dstX64);
         $this->assertSame("x86-content", file_get_contents($dstX86));
         $this->assertSame("x64-content", file_get_contents($dstX64));
+        if ($arm64Staging !== null || $arm64Stable !== null) {
+            $this->assertStringEqualsFile($dstArm64, $arm64Staging ?? $arm64Stable);
+        } else {
+            $this->assertFileDoesNotExist($dstArm64);
+        }
 
         $this->assertFileDoesNotExist($jsonPath);
         $this->assertFileDoesNotExist($jsonPath . '.lock');

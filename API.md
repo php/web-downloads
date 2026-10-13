@@ -217,27 +217,51 @@ curl -i -X POST \
 ### POST /api/series-init
 
 - Auth: Required
-- Purpose: Initialize a series configuration by writing a JSON file into `BUILDS_DIRECTORY/series`.
+- Purpose: Queue initialization of a new PHP series or copy an existing PHP series to another architecture. The API writes a JSON job into `BUILDS_DIRECTORY/series`.
+- Processor: `php runner.php series:init --base-directory=<downloads-root> --builds-directory=<builds-root>`.
 - Request body (JSON):
-    - `php_version` (string, required): Matches `^\d+.\d+$`.
-    - `source_vs` (string, required): Matches `^v[c|s]\d{2}$`.
-    - `target_vs` (string, required): Matches `^v[c|s]\d{2}$`.
-- Success: `200 OK`, empty body.
-- Errors: `400` with validation details if input is invalid.
+    - `subject` (string, optional, default `vs`): `vs` uses the existing initialization path from master; `arch` copies an architecture within the selected PHP series.
+    - `php_version` (string, required): PHP series matching `^\d+\.\d+$`, such as `8.2`. With `subject=arch`, also accepts `master`.
+    - `source_vs` (string, required when `subject=vs`): Matches `^v[c|s]\d{2}$`. Ignored when `subject=arch`.
+    - `target_vs` (string, required when `subject=vs`): Matches `^v[c|s]\d{2}$`. Ignored when `subject=arch`.
+    - `source_arch` (string, required when `subject=arch`): One of `x86`, `x64`, or `arm64`. Ignored when `subject=vs`.
+    - `target_arch` (string, required when `subject=arch`): One of `x86`, `x64`, or `arm64`. Ignored when `subject=vs`.
+- Success: `200 OK`, empty body, meaning the initialization job was queued.
+- Errors: `400` with validation details if input is invalid. Source files and destinations are checked later by the processor.
 
-Example
+With `subject=vs`, initialize a PHP series from master; with `subject=arch`, copy the selected PHP series using its VS version from `config/vs.json`, changing the architecture in series filenames and package entries.
+
+Example (`subject=vs`: initialize a new PHP series from master)
 
 ```bash
 curl -i -X POST \
     -H "Authorization: Bearer $AUTH_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{
+            "subject": "vs",
             "php_version": "8.4",
             "source_vs": "vc15",
             "target_vs": "vs16"
         }' \
     https://downloads.php.net/api/series-init
 ```
+
+Example (`subject=arch`: initialize ARM64 from the existing PHP 8.2 x64 series)
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+            "subject": "arch",
+            "php_version": "8.2",
+            "source_arch": "x64",
+            "target_arch": "arm64"
+        }' \
+    https://downloads.php.net/api/series-init
+```
+
+This creates `packages-8.2-vs16-arm64-stable.txt` and `packages-8.2-vs16-arm64-staging.txt` from the corresponding x64 files. For example, `libffi-3.8.0-1-vs16-x64.zip` becomes `libffi-3.8.0-1-vs16-arm64.zip`. The source series files remain unchanged.
 
 ---
 
