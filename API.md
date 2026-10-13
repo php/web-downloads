@@ -159,6 +159,7 @@ curl -i -X POST \
     - `vs_version_targets` (string, required): Comma-separated list matching `^(v[c|s]\d{2})(,v[c|s]\d{2})*$`.
     - `stability` (string, required): `stable`, `staging`, or both (comma-separated) matching `^(stable|staging)(,(stable|staging))?$`.
     - `update_series` (string, required): `true` or `false`.
+    - `arch` (string, optional): `all` (default), `x64`, `x86`, or `arm64`. Only matching artifacts are published and their series entries updated; other architectures remain unchanged.
     - `token` (string, required): GitHub token used to download artifacts.
 - Success: `200 OK`, empty body.
 - Errors:

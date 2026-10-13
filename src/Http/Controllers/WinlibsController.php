@@ -20,10 +20,11 @@ class WinlibsController extends BaseController
             'vs_version_targets' => 'required|string|regex:/^(v[c|s]\d{2})(,v[c|s]\d{2})*$/',
             'stability' => 'required|string|regex:/^(stable|staging)(,(stable|staging))?$/',
             'update_series' => 'required|string|regex:/^(true|false)$/',
+            'arch' => 'required|string|regex:/\A(all|x64|x86|arm64)\z/',
             'token' => 'required|string',
         ]);
 
-        $validator->validate($data);
+        $validator->validate($data + ['arch' => 'all']);
 
         $valid = $validator->isValid;
 

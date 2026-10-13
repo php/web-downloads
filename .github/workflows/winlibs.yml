@@ -35,6 +35,11 @@ on:
         options:
           - 'true'
           - 'false'
+      arch:
+        description: 'Artifact architecture to publish'
+        type: choice
+        default: all
+        options: [all, x64, x86, arm64]
 jobs:
   print-inputs:
     runs-on: ubuntu-latest
@@ -53,14 +58,26 @@ jobs:
           echo "| vs_version_targets | ${{ inputs.vs_version_targets }} |" >> $GITHUB_STEP_SUMMARY
           echo "| stability | ${{ inputs.stability }} |" >> $GITHUB_STEP_SUMMARY
           echo "| update_series | ${{ inputs.update_series }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| arch | ${{ inputs.arch }} |" >> $GITHUB_STEP_SUMMARY
   test:
     runs-on: ubuntu-latest
     environment: downloads.php.net
     steps:
+      - name: Check architecture filtering support
+        if: inputs.arch != 'all'
+        run: |
+          response=$(curl --silent --show-error --location --request POST \
+            --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
+            --data '{ "arch": "unsupported" }' --write-out '\n%{http_code}' \
+            https://downloads.php.net/api/winlibs)
+          if [[ "$response" != *'The arch field must match'* || "$response" != *$'\n400' ]]; then
+            echo 'The downloads server does not yet support filtering Winlibs artifacts by architecture.'
+            exit 1
+          fi
       - name: Upload
         run: |
-          curl \
+          curl --fail-with-body \
           --request POST \
           --location https://downloads.php.net/api/winlibs \
           --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
-          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "type": "${{ inputs.type }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}", "update_series": "${{ inputs.update_series }}" }'
+          --data '{ "library": "${{ inputs.library }}", "ref": "${{ inputs.ref }}", "type": "${{ inputs.type }}", "workflow_run_id": "${{ inputs.workflow_run_id }}", "php_versions": "${{ inputs.php_versions }}", "vs_version_targets": "${{ inputs.vs_version_targets }}", "stability": "${{ inputs.stability }}", "token": "${{ secrets.TOKEN }}", "update_series": "${{ inputs.update_series }}", "arch": "${{ inputs.arch }}" }'

@@ -481,6 +481,74 @@ class WinlibsCommandTest extends TestCase
         );
     }
 
+    #[DataProvider('architectureFilterProvider')]
+    public function testPublishesOnlySelectedArchitecture(string $type, string $arch): void
+    {
+        $job = $this->winlibsDirectory . '/lib';
+        $deps = $this->baseDirectory . ($type === 'php' ? '/php-sdk/deps' : '/pecl/deps');
+        mkdir($job, 0755, true);
+        mkdir($deps . '/series', 0755, true);
+        file_put_contents($job . '/data.json', json_encode([
+            'type' => $type, 'library' => 'lib', 'ref' => '1.0',
+            'vs_version_targets' => 'vs17', 'php_versions' => '8.4',
+            'stability' => 'staging', 'update_series' => 'true', 'arch' => $arch,
+        ]));
+        foreach (['x64', 'x86', 'arm64'] as $artifactArch) {
+            $filename = "lib-1.0-vs17-$artifactArch.zip";
+            $destination = $type === 'php' ? "$deps/vs17/$artifactArch" : $deps;
+            if (!is_dir($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            file_put_contents("$destination/$filename", 'published');
+            file_put_contents("$job/$filename", 'rebuilt');
+            file_put_contents("$deps/series/packages-8.4-vs17-$artifactArch-staging.txt", "lib-0.9-vs17-$artifactArch.zip");
+        }
+
+        $command = new WinlibsCommand();
+        $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
+        $this->assertSame(0, $command->handle());
+
+        foreach (['x64', 'x86', 'arm64'] as $artifactArch) {
+            $selected = $arch === 'all' || $artifactArch === $arch;
+            $destination = $type === 'php' ? "$deps/vs17/$artifactArch" : $deps;
+            $this->assertStringEqualsFile("$destination/lib-1.0-vs17-$artifactArch.zip", $selected ? 'rebuilt' : 'published');
+            if ($type === 'php') {
+                $version = $selected ? '1.0' : '0.9';
+                $this->assertStringEqualsFile("$deps/series/packages-8.4-vs17-$artifactArch-staging.txt", "lib-$version-vs17-$artifactArch.zip");
+            }
+        }
+        $this->assertDirectoryDoesNotExist($job);
+    }
+
+    public static function architectureFilterProvider(): array
+    {
+        return [
+            ['php', 'arm64'], ['php', 'x64'], ['php', 'x86'], ['php', 'all'],
+            ['pecl', 'arm64'],
+        ];
+    }
+
+    public function testMissingSelectedArchitectureDoesNotPublishOtherArtifacts(): void
+    {
+        $job = $this->winlibsDirectory . '/lib';
+        mkdir($job, 0755, true);
+        file_put_contents($job . '/data.json', json_encode([
+            'type' => 'php', 'library' => 'lib', 'ref' => '1.0',
+            'vs_version_targets' => 'vs17', 'php_versions' => '8.4',
+            'stability' => 'staging', 'update_series' => 'true', 'arch' => 'arm64',
+        ]));
+        file_put_contents($job . '/lib-1.0-vs17-x64.zip', 'rebuilt');
+        $command = new WinlibsCommand();
+        $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
+        ob_start();
+        $result = $command->handle();
+        $output = ob_get_clean();
+        $this->assertSame(1, $result);
+        $this->assertStringContainsString('No valid files found', $output);
+        $this->assertDirectoryDoesNotExist($this->baseDirectory . '/php-sdk');
+        $this->assertFileExists($job . '/lib-1.0-vs17-x64.zip');
+    }
+
     public function testCommandHandlesMissingBaseDirectory(): void
     {
         $command = new WinlibsCommand();
