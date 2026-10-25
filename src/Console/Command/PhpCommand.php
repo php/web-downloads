@@ -86,8 +86,10 @@ class PhpCommand extends Command
                 $this->updateReleasesJson->handle($releases, $destinationDirectory);
                 if ($destinationDirectory === $this->baseDirectory . '/releases') {
                     $this->updateLatestBuilds($releases, $destinationDirectory);
-                    $parts = explode('.', $version);
-                    $this->promoteSeriesFiles($parts[0] . '.' . $parts[1]);
+                    $series = implode('.', array_slice(explode('.', $version), 0, 2));
+                    if (($releases[$series]['version'] ?? null) === $version) {
+                        $this->promoteSeriesFiles($series);
+                    }
                 }
 
                 Helpers::rmdirr($tempDirectory);
@@ -113,7 +115,7 @@ class PhpCommand extends Command
     private function getDestinationDirectory(string $tempDirectory): string
     {
         $version = $this->getBuildVersion($tempDirectory);
-        return $this->baseDirectory . (preg_match('/^\d+\.\d+\.\d+$/', $version) ? '/releases' : '/qa');
+        return $this->baseDirectory . (preg_match('/^\d+\.\d+\.\d+(?:-\d+)?$/', $version) ? '/releases' : '/qa');
     }
 
     /**
@@ -143,7 +145,7 @@ class PhpCommand extends Command
     {
         $files = glob($tempDirectory . '/*');
         if ($files) {
-            $version = $this->getFileVersion($files[0]);
+            $version = $this->getBuildVersion($tempDirectory);
             foreach ($files as $file) {
                 $fileName = basename($file);
                 $destination = $destinationDirectory . '/' . $fileName;
@@ -160,6 +162,12 @@ class PhpCommand extends Command
     {
         $version_short = substr($version, 0, 3);
         $files = glob($directory . '/php*' . $version_short . '*.zip');
+        foreach ($files as $file) {
+            $fileVersion = $this->getFileVersion($file);
+            if (version_compare($fileVersion, $version) > 0) {
+                $version = $fileVersion;
+            }
+        }
         if(!is_dir($directory . '/archives')) {
             mkdir($directory . '/archives', 0755, true);
         }
@@ -190,8 +198,8 @@ class PhpCommand extends Command
             $pattern = '/php-/';
         }
         $file = preg_replace($pattern, '', $file);
-        $parts = explode('-', (string) $file);
-        return str_replace('.zip', '', $parts[0]);
+        preg_match('/^(\d+\.\d+\.\d+(?:(?:alpha|beta|RC)\d+|-dev)?(?:-\d+)?)/i', (string) $file, $matches);
+        return $matches[1] ?? '';
     }
 
     /**

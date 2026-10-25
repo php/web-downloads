@@ -85,6 +85,12 @@ class PhpCommandTest extends TestCase
         ];
         foreach ($builds as [$files]) {
             $builds[] = [array_map(
+                static fn (string $file): string => str_replace(['8.4.1', '8.4.0-dev'], ['8.4.1-1', '8.4.0-dev-2'], $file),
+                $files
+            )];
+        }
+        foreach ($builds as [$files]) {
+            $builds[] = [array_map(
                 static fn (string $file): string => str_replace('-x64', '-arm64', $file),
                 array_filter($files, static fn (string $file): bool => !str_contains($file, '-x86'))
             )];
@@ -103,7 +109,7 @@ class PhpCommandTest extends TestCase
                 } else {
                     $innerZip = new ZipArchive();
                     if ($innerZip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
-                        $innerZip->addFromString("test_file.php", "<?php echo 'Hello, world!'; ?>");
+                        $innerZip->addFromString('build.txt', $zipFileName);
                         $innerZip->close();
                     }
                 }
@@ -130,6 +136,9 @@ class PhpCommandTest extends TestCase
 
         $expectedDestination = $this->baseDirectory . (str_contains($phpZips[0], '-dev-') ? '/qa' : '/releases');
         $this->assertDirectoryExists($expectedDestination, "Destination directory should exist.");
+        foreach ($phpZips as $file) {
+            $this->assertFileExists($expectedDestination . '/' . $file);
+        }
         foreach (array_filter($phpZips, static fn (string $file): bool => str_ends_with($file, '.json')) as $sidecar) {
             $this->assertFileExists($expectedDestination . '/' . $sidecar);
             $this->assertFileExists($expectedDestination . '/archives/' . $sidecar);
@@ -252,5 +261,57 @@ class PhpCommandTest extends TestCase
         $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x86-stable.txt');
         $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-x64-stable.txt');
         $this->assertFileDoesNotExist($this->baseDirectory . '/php-sdk/deps/series/packages-8.4-vs17-arm64-stable.txt');
+    }
+
+    public function testRebuildsArchiveOlderNumbersAndNeverDowngradeLatest(): void
+    {
+        $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
+        $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
+        $files = self::buildsProvider()[0][0];
+        $releaseDirectory = $this->baseDirectory . '/releases';
+        $latestVersion = '8.4.1';
+        foreach (['8.4.1', '8.4.1-1', '8.4.1-2', '8.4.1-10', '8.4.1-3', '8.4.2', '8.4.1-11'] as $version) {
+            $builds = array_map(static fn (string $file): string => str_replace('8.4.1', $version, $file), $files);
+            $this->stageBuilds($builds, $this->buildsDirectory . '/php/rebuild.zip');
+            $this->assertSame(0, $command->handle());
+            if (version_compare($version, $latestVersion) > 0) {
+                $latestVersion = $version;
+            }
+            $releases = json_decode(file_get_contents($releaseDirectory . '/releases.json'), true, flags: JSON_THROW_ON_ERROR);
+            $this->assertSame($latestVersion, $releases['8.4']['version']);
+            foreach ($builds as $file) {
+                $this->assertFileExists($releaseDirectory . '/archives/' . $file);
+                if ($version !== $latestVersion) {
+                    $this->assertFileDoesNotExist($releaseDirectory . '/' . $file);
+                }
+            }
+            foreach ($files as $original) {
+                $current = str_replace('8.4.1', $latestVersion, $original);
+                $this->assertFileExists($releaseDirectory . '/' . $current);
+                if (str_ends_with($original, '.zip')) {
+                    $latest = str_replace(['8.4.1', '.zip'], ['8.4', '-latest.zip'], $original);
+                    $this->assertFileEquals($releaseDirectory . '/' . $current, $releaseDirectory . '/latest/' . $latest);
+                }
+            }
+            array_walk_recursive($releases, function ($value, $key) use ($latestVersion, $releaseDirectory): void {
+                if ($key === 'path') {
+                    $this->assertStringContainsString($latestVersion, $value);
+                    $this->assertFileExists($releaseDirectory . '/' . $value);
+                }
+            });
+            foreach (['nts', 'ts'] as $ts) {
+                foreach (['x86', 'x64'] as $arch) {
+                    foreach (['zip', 'debug_pack', 'devel_pack'] as $type) {
+                        $entry = $releases['8.4']["$ts-vs17-$arch"][$type];
+                        $this->assertSame(hash_file('sha256', $releaseDirectory . '/' . $entry['path']), $entry['sha256']);
+                    }
+                }
+            }
+        }
+        foreach (['8.4.1', '8.4.1-1', '8.4.1-2', '8.4.1-10'] as $old) {
+            foreach ($files as $file) {
+                $this->assertFileDoesNotExist($releaseDirectory . '/' . str_replace('8.4.1', $old, $file));
+            }
+        }
     }
 }

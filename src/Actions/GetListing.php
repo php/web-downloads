@@ -22,8 +22,12 @@ class GetListing
             $parts = $this->parseFileName(basename($file));
             $key = ($parts['nts'] ? 'nts-' : 'ts-') . $parts['vc'] . '-' . $parts['arch'];
             $version_short = $parts['version_short'];
-            if (!isset($releases[$version_short]['version'])) {
-                $releases[$version_short]['version'] = $parts['version'];
+            $currentVersion = $releases[$version_short]['version'] ?? null;
+            if ($currentVersion !== null && version_compare($parts['version'], $currentVersion) < 0) {
+                continue;
+            }
+            if ($currentVersion === null || version_compare($parts['version'], $currentVersion) > 0) {
+                $releases[$version_short] = ['version' => $parts['version']];
             }
             $releases[$version_short][$key]['mtime'] = $mtime;
             $releases[$version_short][$key]['zip'] = [
@@ -104,7 +108,11 @@ class GetListing
         $fileName = str_replace(['-Win32', '.zip'], ['', ''], $fileName);
 
         $parts = explode('-', $fileName);
-        if (is_numeric($parts[2]) || $parts[2] == 'dev') {
+        if ($parts[2] === 'dev' && isset($parts[3]) && ctype_digit($parts[3])) {
+            $parts[2] .= '-' . $parts[3];
+            array_splice($parts, 3, 1);
+        }
+        if (is_numeric($parts[2]) || str_starts_with($parts[2], 'dev')) {
             $version = $parts[1] . '-' . $parts[2];
             $nts = $parts[3] == 'nts' ? 'nts' : false;
             if ($nts) {

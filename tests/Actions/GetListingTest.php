@@ -80,6 +80,26 @@ class GetListingTest extends TestCase
                     'ts'            => false,
                 ],
             ],
+            'numbered nts' => [
+                'php-8.5.12-1-nts-Win32-vs17-x64.zip',
+                ['version' => '8.5.12-1', 'version_short' => '8.5', 'nts' => 'nts', 'vc' => 'vs17', 'arch' => 'x64', 'ts' => false],
+            ],
+            'numbered ts' => [
+                'php-8.5.12-10-Win32-vs17-x86.zip',
+                ['version' => '8.5.12-10', 'version_short' => '8.5', 'nts' => false, 'vc' => 'vs17', 'arch' => 'x86', 'ts' => false],
+            ],
+            'numbered dev' => [
+                'php-8.6.0-dev-2-nts-Win32-vs18-arm64.zip',
+                ['version' => '8.6.0-dev-2', 'version_short' => '8.6', 'nts' => 'nts', 'vc' => 'vs18', 'arch' => 'arm64', 'ts' => false],
+            ],
+            'numbered RC' => [
+                'php-8.6.0RC1-2-Win32-vs18-x64.zip',
+                ['version' => '8.6.0RC1-2', 'version_short' => '8.6', 'nts' => false, 'vc' => 'vs18', 'arch' => 'x64', 'ts' => false],
+            ],
+            'latest alias' => [
+                'php-8.5-nts-Win32-vs17-x64-latest.zip',
+                ['version' => '8.5', 'version_short' => '8.5', 'nts' => 'nts', 'vc' => 'vs17', 'arch' => 'x64', 'ts' => false],
+            ],
         ];
     }
 
@@ -206,5 +226,30 @@ class GetListingTest extends TestCase
         $expectedSha256 = hash_file('sha256', $installerFile);
         $this->assertEquals($expectedSha256, $installerInfo['sha256']);
         $this->assertFileExists($this->tempDir . '/sha256sum.txt');
+    }
+
+    public function testListingSelectsOneRevisionAcrossEveryPackage(): void
+    {
+        foreach (['8.5.12', '8.5.12-1', '8.5.12-2', '8.5.12-10'] as $version) {
+            foreach ([
+                "php-$version-nts-Win32-vs17-x64.zip",
+                "php-debug-pack-$version-nts-Win32-vs17-x64.zip",
+                "php-devel-pack-$version-nts-Win32-vs17-x64.zip",
+                "php-$version-src.zip",
+                "php-test-pack-$version.zip",
+            ] as $file) {
+                file_put_contents($this->tempDir . '/' . $file, $file);
+            }
+        }
+        // An older architecture must not leak into metadata for the selected revision.
+        file_put_contents($this->tempDir . '/php-8.5.12-nts-Win32-vs17-x86.zip', 'older architecture');
+        $release = $this->getListing->handle($this->tempDir)['8.5'];
+        $this->assertSame('8.5.12-10', $release['version']);
+        $this->assertArrayNotHasKey('nts-vs17-x86', $release);
+        foreach (['zip', 'debug_pack', 'devel_pack'] as $type) {
+            $this->assertStringContainsString('8.5.12-10-', $release['nts-vs17-x64'][$type]['path']);
+        }
+        $this->assertSame('php-8.5.12-10-src.zip', $release['source']['path']);
+        $this->assertSame('php-test-pack-8.5.12-10.zip', $release['test_pack']['path']);
     }
 }
