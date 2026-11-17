@@ -248,7 +248,7 @@ class WinlibsCommandTest extends TestCase
 
     public static function upcomingSeriesProvider(): array
     {
-        return [['8.6'], ['8.7'], ['master']];
+        return [['8.7'], ['master']];
     }
 
     #[DataProvider('upcomingSeriesProvider')]
