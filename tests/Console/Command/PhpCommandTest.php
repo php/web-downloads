@@ -5,6 +5,9 @@ namespace Console\Command;
 
 use App\Actions\GetListing;
 use App\Actions\UpdateReleasesJson;
+use App\Http\Controllers\PhpController;
+use App\Http\Controllers\PhpReleaseController;
+use App\Http\DeferredCallbacks;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use App\Console\Command\PhpCommand;
@@ -174,6 +177,89 @@ class PhpCommandTest extends TestCase
         $output = ob_get_clean();
         $this->assertEquals('No test pack found in the artifact', $output);
         $this->assertEquals(1, $result, "Command should return failure.");
+    }
+
+    public static function stagedReleaseModes(): array
+    {
+        return [
+            'selected build' => [false],
+            'all completed builds' => [true],
+        ];
+    }
+
+    #[DataProvider('stagedReleaseModes')]
+    public function testStagedBuildsArePublishedOnlyAfterRelease(bool $releaseAll): void
+    {
+        $build = 'php-8.4.1-Win32-vs17-x64.zip';
+        $artifact = $this->baseDirectory . '/artifact.zip';
+        $this->stageBuilds([$build, 'php-test-pack-8.4.1.zip'], $artifact);
+
+        $queue = $this->buildsDirectory . '/php';
+        $request = $this->baseDirectory . '/request.json';
+        file_put_contents($request, json_encode([
+            'url' => 'file://' . $artifact,
+            'token' => 'unused-token',
+            'staging' => true,
+        ]));
+
+        $previousBuildsDirectory = getenv('BUILDS_DIRECTORY');
+        putenv('BUILDS_DIRECTORY=' . $this->buildsDirectory);
+        try {
+            ob_start();
+            try {
+                (new PhpController($request))->handle();
+                $response = ob_get_contents();
+            } finally {
+                ob_end_clean();
+            }
+            $this->assertSame(200, http_response_code());
+            $stagedBuild = json_decode($response, true, 512, JSON_THROW_ON_ERROR)['build'];
+            $staging = $queue . '/staging';
+            $this->assertDirectoryExists($staging);
+            $this->assertFileDoesNotExist($staging . '/' . $stagedBuild);
+            DeferredCallbacks::invoke();
+            $this->assertFileEquals($artifact, $staging . '/' . $stagedBuild);
+
+            $otherBuild = 'php-' . bin2hex(random_bytes(16)) . '.zip';
+            $incompleteBuild = 'php-' . bin2hex(random_bytes(16)) . '.zip.part';
+            copy($artifact, $staging . '/' . $otherBuild);
+            touch($staging . '/' . $incompleteBuild);
+
+            $command = new PhpCommand(new GetListing(), new UpdateReleasesJson());
+            $command->options = ['base-directory' => $this->baseDirectory, 'builds-directory' => $this->buildsDirectory];
+            $releases = $this->baseDirectory . '/releases';
+            $this->assertSame(0, $command->handle());
+            $this->assertFileDoesNotExist($releases . '/' . $build);
+            $this->assertFileDoesNotExist($releases . '/releases.json');
+            $this->assertFileExists($staging . '/' . $stagedBuild);
+
+            file_put_contents($request, json_encode(['build' => $releaseAll ? 'all' : $stagedBuild]));
+            (new PhpReleaseController($request))->handle();
+            $this->assertSame(200, http_response_code());
+            $this->assertFileDoesNotExist($staging . '/' . $stagedBuild);
+            $this->assertFileEquals($artifact, $queue . '/' . $stagedBuild);
+            if ($releaseAll) {
+                $this->assertFileDoesNotExist($staging . '/' . $otherBuild);
+                $this->assertFileEquals($artifact, $queue . '/' . $otherBuild);
+            } else {
+                $this->assertFileEquals($artifact, $staging . '/' . $otherBuild);
+                $this->assertFileDoesNotExist($queue . '/' . $otherBuild);
+            }
+            $this->assertFileExists($staging . '/' . $incompleteBuild);
+            $this->assertFileDoesNotExist($queue . '/' . $incompleteBuild);
+            $this->assertFileDoesNotExist($releases . '/' . $build);
+
+            $this->assertSame(0, $command->handle());
+            $this->assertFileDoesNotExist($queue . '/' . $stagedBuild);
+            $this->assertFileDoesNotExist($queue . '/' . $otherBuild);
+            $this->assertFileExists($releases . '/' . $build);
+            $this->assertFileEquals($releases . '/' . $build, $releases . '/archives/' . $build);
+            $this->assertFileEquals($releases . '/' . $build, $releases . '/latest/php-8.4-Win32-vs17-x64-latest.zip');
+        } finally {
+            DeferredCallbacks::clear();
+            header_remove();
+            putenv($previousBuildsDirectory === false ? 'BUILDS_DIRECTORY' : 'BUILDS_DIRECTORY=' . $previousBuildsDirectory);
+        }
     }
 
     public function testCommandHandlesMissingBaseDirectory(): void

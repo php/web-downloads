@@ -22,9 +22,15 @@ class DeletePendingJobController extends BaseController
 
     protected function validate(array $data): bool
     {
+        $type = $data['type'] ?? null;
+        $namePattern = '(?!\.{1,2}\z)[A-Za-z0-9._-]+';
+        if (is_string($type) && strtolower($type) === 'php') {
+            $namePattern = '(?:' . $namePattern . '|staging/[A-Za-z0-9._-]+\.zip)';
+        }
+
         $validator = new Validator([
             'type' => 'required|string|regex:/^(php|pecl|winlibs)$/i',
-            'job' => 'required|string|regex:/\A(?!\.{1,2}\z)[A-Za-z0-9._-]+\z/',
+            'job' => 'required|string|regex:~\A' . $namePattern . '\z~',
         ]);
 
         $validator->validate($data);

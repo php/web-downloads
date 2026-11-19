@@ -1,0 +1,24 @@
+name: Release staged PHP builds
+run-name: ${{ inputs.build == 'all' && 'Release all staged PHP builds' || format('Release staged PHP build {0}', inputs.build) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: 'Build filename from the upload summary, or all'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: downloads.php.net
+    steps:
+      - name: Queue staged builds for release
+        shell: bash
+        env:
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+        run: |
+          jq -c '{build: .inputs.build}' "$GITHUB_EVENT_PATH" | \
+            curl --silent --show-error --fail-with-body \
+              --header "Authorization: Bearer $AUTH_TOKEN" --json @- \
+              https://downloads.php.net/api/php-release

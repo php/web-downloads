@@ -1,5 +1,5 @@
 name: Upload PHP Builds
-run-name: Upload PHP builds for ${{ inputs.php-version }}
+run-name: ${{ inputs.staging && 'Stage PHP build' || format('Upload PHP builds for {0}', inputs.php-version) }}
 on:
   workflow_dispatch:
     inputs:
@@ -9,6 +9,10 @@ on:
       url:
         description: 'Artifact URL'
         required: true
+      staging:
+        description: 'Stage for manual release'
+        type: boolean
+        default: false
 
 jobs:
   test:
@@ -16,9 +20,21 @@ jobs:
 
     steps:
       - name: Upload
+        shell: bash
+        env:
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          ARTIFACT_TOKEN: ${{ secrets.TOKEN }}
+          STAGING: ${{ inputs.staging }}
         run: |
-          curl \
-          --request POST \
-          --location https://downloads.php.net/api/php \
-          --header 'Authorization: Bearer ${{ secrets.AUTH_TOKEN }}' \
-          --data '{ "url": "${{ inputs.url }}", "token": "${{ secrets.TOKEN }}" }'
+          if ! response=$(jq -c --arg token "$ARTIFACT_TOKEN" --argjson staging "$STAGING" \
+              '{url: .inputs.url, token: $token, staging: $staging}' "$GITHUB_EVENT_PATH" | \
+              curl --silent --show-error --fail-with-body \
+                --header "Authorization: Bearer $AUTH_TOKEN" --json @- https://downloads.php.net/api/php); then
+            printf '%s\n' "$response" >&2
+            exit 1
+          fi
+
+          if [[ "$STAGING" == true ]]; then
+            build=$(jq -er '.build | strings | select(length > 0)' <<< "$response")
+            printf 'Staged PHP build %s\n' "$build" >> "$GITHUB_STEP_SUMMARY"
+          fi
