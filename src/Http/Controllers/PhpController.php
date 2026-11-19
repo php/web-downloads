@@ -15,6 +15,12 @@ class PhpController extends BaseController
 {
     protected function validate(array $data): bool
     {
+        if (array_key_exists('staging', $data) && !is_bool($data['staging'])) {
+            http_response_code(400);
+            echo 'Invalid request: The staging field must be a boolean.';
+            return false;
+        }
+
         $validator = new Validator([
             'url' => 'required|url',
             'token' => 'required|string',
@@ -34,16 +40,23 @@ class PhpController extends BaseController
 
     protected function execute(array $data): void
     {
+        $staging = $data['staging'] ?? false;
         try {
-            $filepath = $this->prepareBuildFilepath($data['url']);
+            $filepath = $this->prepareBuildFilepath($data['url'], $staging);
         } catch (Exception $exception) {
             http_response_code(500);
             echo 'Error: ' . $exception->getMessage();
             return;
         }
 
+        $response = '';
+        if ($staging) {
+            header('Content-Type: application/json');
+            $response = json_encode(['build' => basename($filepath)], JSON_THROW_ON_ERROR);
+        }
         http_response_code(200);
-        header('Content-Length: 0');
+        header('Content-Length: ' . strlen($response));
+        echo $response;
 
         DeferredCallbacks::add(
             fn () => $this->fetchPhpBuild($data['url'], $data['token'], $filepath),
@@ -85,7 +98,7 @@ class PhpController extends BaseController
         }
     }
 
-    private function prepareBuildFilepath(string $url): string
+    private function prepareBuildFilepath(string $url, bool $staging): string
     {
         $buildsDirectory = getenv('BUILDS_DIRECTORY');
         if ($buildsDirectory === false || $buildsDirectory === '') {
@@ -98,7 +111,7 @@ class PhpController extends BaseController
             $previousUmask = umask(0);
 
             try {
-                if (!mkdir($directory, 0777, true) && !is_dir($directory)) {
+                if (!@mkdir($directory, 0777, true) && !is_dir($directory)) {
                     throw new RuntimeException('Failed to create the PHP builds directory');
                 }
             } finally {
@@ -106,12 +119,19 @@ class PhpController extends BaseController
             }
         }
 
-        if (!is_writable($directory)) {
-            throw new RuntimeException('PHP builds directory is not writable');
+        if ($staging) {
+            $directory .= '/staging';
+            if (!is_dir($directory) && !@mkdir($directory, 0755) && !is_dir($directory)) {
+                throw new RuntimeException('Failed to create the PHP staging directory');
+            }
         }
 
-        $hash = hash('sha256', $url) . uniqid('', true);
+        if (!is_writable($directory)) {
+            throw new RuntimeException('PHP ' . ($staging ? 'staging' : 'builds') . ' directory is not writable');
+        }
 
-        return $directory . '/php-' . $hash . '.zip';
+        $id = $staging ? bin2hex(random_bytes(16)) : hash('sha256', $url) . uniqid('', true);
+
+        return $directory . '/php-' . $id . '.zip';
     }
 }

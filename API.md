@@ -28,6 +28,7 @@
 - [`GET /api/list-builds`](#get-apilist-builds)
 - [`POST /api/delete-pending-job`](#post-apidelete-pending-job)
 - [`POST /api/php`](#post-apiphp)
+- [`POST /api/php-release`](#post-apiphp-release)
 - [`POST /api/pecl`](#post-apipecl)
 - [`POST /api/winlibs`](#post-apiwinlibs)
 - [`POST /api/winlibs-delete`](#post-apiwinlibs-delete)
@@ -65,7 +66,7 @@ curl -i -X GET \
 - Purpose: Remove a queued build job before it is processed.
 - Request body (JSON):
     - `type` (string, required): One of `php`, `pecl`, or `winlibs`.
-    - `job` (string, required): The job filename (for `php`/`pecl`) or directory name (for `winlibs`).
+    - `job` (string, required): The job filename for `php` or `pecl`, or directory name for `winlibs`. To delete a completed staged PHP ZIP, set `type` to `php` and send `staging/<filename>.zip`. Use the `php/staging/<filename>.zip` path from `/api/list-builds` and drop the leading `php/`.
 - Success: `200 OK` with `{ "status": "deleted" }`.
 - Errors:
     - `400` if validation fails (missing/invalid fields).
@@ -94,9 +95,12 @@ curl -i -X POST \
 - Request body (JSON):
     - `url` (string, required, URL): Direct download URL of the artifact.
     - `token` (string, required): Used as a GitHub token if the URL points to `api.github.com`.
-- Success: `200 OK`, returned as soon as the download is accepted. The download continues after the response and the completed ZIP is published atomically in `BUILDS_DIRECTORY/php`.
+    - `staging` (boolean, optional, default `false`): Hold the ZIP in `BUILDS_DIRECTORY/php/staging` until approved for release. The API creates this directory on first use.
+- Success is `200 OK` as soon as the download is accepted. The completed ZIP is moved atomically into its queue directory after the response.
+    - For a regular upload, the response is empty and the ZIP goes into `BUILDS_DIRECTORY/php`.
+    - For a staged upload, the response is JSON such as `{"build":"php-0123456789abcdef0123456789abcdef.zip"}`. To recover the filename later, use `GET /api/list-builds` and look for paths of the form `php/staging/<build>.zip`. Pass the ZIP basename, including `.zip`, to `/api/php-release`.
 - Errors:
-    - `400` with validation details if `url` or `token` are missing/invalid.
+    - `400` with validation details if `url`, `token`, or `staging` are invalid.
     - `500` with `Error: ...` if the download cannot be prepared.
     - Download failures after the response are written to the server error log and no ZIP is published.
 
@@ -111,6 +115,23 @@ curl -i -X POST \
             "token": "ghp_..."
         }' \
     https://downloads.php.net/api/php
+```
+
+---
+
+### POST /api/php-release
+
+- Auth required.
+- Set `build` to the exact filename returned by a staged upload or to `all` to queue every completed ZIP present in staging when the API runs. In-progress downloads stay in staging.
+- `200 OK` with an empty body means the selected ZIPs were moved into `BUILDS_DIRECTORY/php` for the next cron run. `all` also returns `200 OK` when there are no completed builds.
+- `400` for an invalid `build` value, `404` if a requested staged ZIP is absent, `409` if a destination already exists, or `500` if the queue operation fails.
+
+```bash
+curl -i -X POST \
+    -H "Authorization: Bearer $AUTH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"build":"all"}' \
+    https://downloads.php.net/api/php-release
 ```
 
 ---

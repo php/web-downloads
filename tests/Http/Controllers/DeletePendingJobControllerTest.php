@@ -54,6 +54,27 @@ class DeletePendingJobControllerTest extends TestCase
         unlink($inputFile);
     }
 
+    public function testDeletesOnlyTheStagedPhpBuild(): void
+    {
+        $build = 'php-0123456789abcdef0123456789abcdef.zip';
+        $queue = $this->tempDir . '/php';
+        mkdir($queue . '/staging', 0755, true);
+        file_put_contents($queue . '/' . $build, 'queued build');
+        file_put_contents($queue . '/staging/' . $build, 'staged build');
+
+        $input = $this->tempDir . '/request.json';
+        file_put_contents($input, json_encode(['type' => 'php', 'job' => 'staging/' . $build], JSON_THROW_ON_ERROR));
+
+        ob_start();
+        (new DeletePendingJobController($input, $this->tempDir))->handle();
+        $output = ob_get_clean();
+
+        static::assertSame(200, http_response_code());
+        static::assertJsonStringEqualsJsonString('{"status":"deleted"}', $output);
+        static::assertFileDoesNotExist($queue . '/staging/' . $build);
+        static::assertStringEqualsFile($queue . '/' . $build, 'queued build');
+    }
+
     /**
      * @throws JsonException
      */

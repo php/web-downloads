@@ -12,6 +12,8 @@ use RecursiveIteratorIterator;
 
 class ListBuildsControllerTest extends TestCase
 {
+    private const string STAGED_BUILD = 'php/staging/php-0123456789abcdef0123456789abcdef.zip';
+
     public function testHandleOutputsBuildListing(): void
     {
         $tempDir = $this->createTempBuildDirectory();
@@ -29,9 +31,10 @@ class ListBuildsControllerTest extends TestCase
 
         static::assertSame(200, http_response_code());
         static::assertArrayHasKey('builds', $data);
-        static::assertCount(2, $data['builds']);
+        static::assertCount(3, $data['builds']);
         static::assertSame('php/build-one.zip', $data['builds'][0]['path']);
-        static::assertSame('winlibs/run/info.json', $data['builds'][1]['path']);
+        static::assertSame(self::STAGED_BUILD, $data['builds'][1]['path']);
+        static::assertSame('winlibs/run/info.json', $data['builds'][2]['path']);
 
         $this->removeDirectory($tempDir);
     }
@@ -63,11 +66,12 @@ class ListBuildsControllerTest extends TestCase
     private function createTempBuildDirectory(): string
     {
         $base = sys_get_temp_dir() . '/list-builds-' . uniqid();
-        mkdir($base . '/php', 0755, true);
+        mkdir($base . '/php/staging', 0755, true);
         mkdir($base . '/winlibs/run', 0755, true);
 
         file_put_contents($base . '/php/build-one.zip', 'fake-zip-data');
         touch($base . '/php/build-one.zip', 1730000000);
+        file_put_contents($base . '/' . self::STAGED_BUILD, 'staged-zip-data');
 
         file_put_contents($base . '/winlibs/run/info.json', '{}');
         touch($base . '/winlibs/run/info.json', 1730003600);
